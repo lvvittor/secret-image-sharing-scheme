@@ -29,6 +29,9 @@ class Polynoimal:
         
         Arguments:
             points {List[Tuple[Z251, Z251]]} -- List of points to interpolate [(x1, y1), (x2, y2), ..., (xn, yn)]
+
+        Returns:
+            Polynomial -- Polynomial that interpolates the given points
         """
         n = len(points)
         coefficients = []
