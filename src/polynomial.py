@@ -43,6 +43,9 @@ class Polynoimal:
                     current_coefficient += points[i][1] * li
             coefficients.append(current_coefficient)
         return Polynomial(coefficients)
+    
+    def set_coefficient(self, index: int, value: Z251):
+        self.coefficients[index] = value
 
 
 
