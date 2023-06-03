@@ -1,9 +1,10 @@
+from __future__ import annotations
 from src.z251 import Z251
 from typing import List, Tuple
 
 
 class Polynomial:
-    def __init__(self, coefficients: list[Z251]):
+    def __init__(self, coefficients: List[Z251]):
         self.coefficients = coefficients
         self.degree = len(self.coefficients) - 1
 
@@ -22,7 +23,7 @@ class Polynomial:
         return result
     
     # TODO: Check if this is correct!
-    def interpolate(self, points: List[Tuple[Z251, Z251]]) -> "Polynomial":
+    def interpolate(self, points: List[Tuple[Z251, Z251]]) -> Polynomial:
         """
         Returns the polynomial that interpolates the given points
         
