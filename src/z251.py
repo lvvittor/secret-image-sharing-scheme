@@ -268,6 +268,8 @@ class Z251:
     }
 
     def __init__(self, value):
+        print(f"value: {value}")
+        print(f"type(value): {type(value)}")
         self.value = value % 251
 
     def __str__(self):

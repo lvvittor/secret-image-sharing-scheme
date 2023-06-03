@@ -1,7 +1,7 @@
 import random
-from polynomial import Polynomial
-from bmp_file import BMPFile
-from z251 import Z251
+from src.polynomial import Polynomial
+from src.bmp_file import BMPFile
+from src.z251 import Z251
 
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]

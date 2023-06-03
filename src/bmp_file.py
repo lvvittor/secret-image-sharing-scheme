@@ -7,7 +7,7 @@ class BMPFile:
         self.file_path = file_path
         self.header = {}
         self.image_data = []
-
+        print(f"Path: {file_path} \n type: {type(file_path)}")
         self.read_header()
         self.read_image_data()
 
