@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+from distribute_image import DistributeImage
 
 def distribute_image(
     secret_image: str,
@@ -33,6 +34,8 @@ def distribute_image(
     )
 
     # Add your logic here to distribute the secret image into the images in the directory
+    distribute_image = DistributeImage(secret_image, k, images)
+    distribute_image.generate_shadows()
 
 
 def recover_image(

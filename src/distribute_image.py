@@ -19,6 +19,8 @@ class DistributeImage:
         """Random integer between 1 and 251"""
         return random.randint(1, 251)
     
+    
+    
     def generate_shadows(self):
 
         block_size = 2 * self.k - 2
@@ -56,6 +58,7 @@ class DistributeImage:
             # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = gi(j) for j in [1, n] for each participant Pj
             # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
 
+            # TODO: refactor this, to actually generate the shadows
             # self.images is the amount of participants
             shadow_image = []
             for j in range(self.images):
@@ -65,3 +68,13 @@ class DistributeImage:
                 shadow_image.append(di)
             
             shadows.append(shadow_image)
+
+    def lsb_hide(self):
+        
+        if self.k in [3, 4]:
+            # If k is 3 or 4, the dealer hides the secret image in LSB4
+            pass
+        
+        # If k is 5, 6, 7 or 8 the dealer hides the secret image in LSB2
+        pass
+

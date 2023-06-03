@@ -115,3 +115,93 @@ class BMPFile:
                 print(pixel_data)
             print()
 
+    def lsb_hide(self, secret_data, n_bits):
+        """Hide the secret data in the least significant bits of the image data
+        
+        Arguments:
+            secret_data {bytes} -- Secret data to hide in the image data
+            n_bits {int} -- Number of least significant bits to use for hiding the secret data
+
+        Raises:
+            ValueError: If the secret data is too large to be hidden in the image data
+        """
+        max_secret_size = (self.total_pixels * n_bits) // BMPFile.BITS_PER_BYTE
+
+        if len(secret_data) > max_secret_size:
+            raise ValueError(f"Secret data is too large to be hidden in the image data. Maximum size: {max_secret_size} bytes")
+        
+        bits_to_keep = self.header['bits_per_pixel'] - n_bits
+
+        # Create a binary string representation of the secret data
+        # Example: 
+        # If secret_data is b'AB', the resulting secret_bin would be '0100000101000010'
+        secret_bin = ''.join(format(byte, '08b') for byte in secret_data)
+
+        secret_index = 0
+
+        # Iterate over each row of pixels
+        for row_index, row in enumerate(self.image_data):
+            # Iterate over each pixel in the row
+            for pixel_index, pixel_data in enumerate(row):
+                # Get the pixel data as an integer
+                pixel_value = int.from_bytes(pixel_data, 'little')
+
+                # Calculate the number of bits to shift the secret data to the right
+                shift_bits = bits_to_keep * (pixel_index % (self.header['bits_per_pixel'] // n_bits))
+
+                # Extract the bits from the secret data
+                secret_bits = secret_bin[secret_index:secret_index + n_bits]
+
+                # Shift the secret bits to the left
+                secret_value = int(secret_bits, 2) << shift_bits
+
+                # Clear the bits to be replaced in the pixel data
+                pixel_value &= ~(2 ** bits_to_keep - 1) << shift_bits
+
+                # Set the bits from the secret data in the pixel data
+                pixel_value |= secret_value
+
+                # Set the modified pixel data
+                self.image_data[row_index][pixel_index] = pixel_value.to_bytes(self.header['bits_per_pixel'] // BMPFile.BITS_PER_BYTE, 'little')
+
+                secret_index += n_bits
+
+    def lsb_recover(self, n_bits):
+        """Recover the secret data from the least significant bits of the image data
+        
+        Arguments:
+            n_bits {int} -- Number of least significant bits used for hiding the secret data
+        
+        Returns:
+            bytes -- Recovered secret data
+        """
+        # Calculate the number of bits to keep
+        bits_to_keep = self.header['bits_per_pixel'] - n_bits
+
+        secret_data = bytearray()
+        secret_bin = ""
+
+        # Iterate over each row of pixels
+        for _, row in enumerate(self.image_data):
+            # Iterate over each pixel in the row
+            for pixel_index, pixel_data in enumerate(row):
+                # Get the pixel data as an integer
+                pixel_value = int.from_bytes(pixel_data, 'little')
+
+                # Calculate the number of bits to shift the secret data to the right
+                shift_bits = bits_to_keep * (pixel_index % (self.header['bits_per_pixel'] // n_bits))
+
+                # Extract the secret bits from the pixel data
+                secret_bits = (pixel_value >> shift_bits) & ((2 ** n_bits) - 1)
+
+                # Add the extracted secret bits to the secret binary string
+                secret_bin += format(secret_bits, f'0{n_bits}b')
+
+                # While the secret binary string has enough bits, extract a byte and add it to the secret data
+                while len(secret_bin) >= 8:
+                    secret_byte = int(secret_bin[:8], 2)
+                    secret_data.append(secret_byte)
+                    secret_bin = secret_bin[8:]
+
+        return bytes(secret_data)
+ 

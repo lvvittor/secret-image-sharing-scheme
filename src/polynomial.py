@@ -1,9 +1,8 @@
-from __future__ import Polynomial
-from z251 import Z251
+from src.z251 import Z251
 from typing import List, Tuple
 
 
-class Polynoimal:
+class Polynomial:
     def __init__(self, coefficients: list[Z251]):
         self.coefficients = coefficients
         self.degree = len(self.coefficients) - 1
@@ -47,7 +46,10 @@ class Polynoimal:
     def set_coefficient(self, index: int, value: Z251):
         self.coefficients[index] = value
 
-
+    def __eq__(self, other):
+        if isinstance(other, Polynomial):
+            return self.degree == other.degree and all(a == b for a, b in zip(self.coefficients, other.coefficients))
+        return False
 
 
 

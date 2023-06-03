@@ -6,6 +6,7 @@ class Z251:
         print(a + b)  # Output: 24
         print(a - b)  # Output: 170
         print(a * b)  # Output: 60
+        print(a ** 2) # Output: 40
         print(a / b)  # Output: 173
         print(a == b) # Output: False
         print(a != b) # Output: True
@@ -286,6 +287,11 @@ class Z251:
         if isinstance(other, Z251):
             return Z251((self.value * other.value) % 251)
         raise ValueError("Unsupported operand type for *")
+    
+    def __pow__(self, exponent):
+        if isinstance(exponent, int):
+            return Z251(pow(self.value, exponent, 251))
+        raise ValueError("Unsupported operand type for pow()")
 
     def __truediv__(self, other):
         if isinstance(other, Z251):
