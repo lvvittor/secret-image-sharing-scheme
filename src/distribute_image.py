@@ -68,13 +68,26 @@ class DistributeImage:
                 shadow_image.append(di)
             
             shadows.append(shadow_image)
+        return shadows
 
-    def lsb_hide(self):
-        
-        if self.k in [3, 4]:
-            # If k is 3 or 4, the dealer hides the secret image in LSB4
-            pass
-        
-        # If k is 5, 6, 7 or 8 the dealer hides the secret image in LSB2
-        pass
+    # TODO: check if bits modification is being done correctly
+    def lsb_hide(self, shadows, images):
+        mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used 
+
+        for i, shadow in enumerate(shadows):
+            image = images[i]
+
+            shadow_bytes = bytearray(shadow)
+            image_bytes = bytearray(image)
+
+            for j, byte in enumerate(shadow_bytes):
+                # Modify the LSB4 bits of the corresponding byte in the image
+                image_bytes[j] = (image_bytes[j] & mask[0]) | (byte & mask[1])  
+            # Update the modified image
+            images[i] = bytes(image_bytes)
+
+    def lsb_mask(self, k):
+        # If k is 3 or 4, the dealer hides the secret image in LSB4
+        return (0xFC, 0x03) if k not in [3, 4] else (0xF0, 0x0F)
+
 
