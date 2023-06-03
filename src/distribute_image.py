@@ -11,9 +11,6 @@ class DistributeImage:
             raise ValueError(f"Invalid k value: {k}. Allowed values: {DistributeImage.ALLOWED_K_VALUES}")
 
         self.secret_image = BMPFile(secret_image)
-        self.secret_image.read_header()
-        self.secret_image.read_image_data()
-
         self.k = k
         self.images = images
 
@@ -21,11 +18,6 @@ class DistributeImage:
     def ri(self):
         """Random integer between 1 and 251"""
         return random.randint(1, 251)
-    
-
-    def distribute(self):
-        # do something
-        return self.image
     
     def generate_shadows(self):
 
@@ -36,18 +28,18 @@ class DistributeImage:
         shadows = []
 
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
-        # For each block Bi, i e [1, t] there are 2k - 2 secret pixels
-        # ai,0, ai,1, ..., ai,k-1 and bi,0, bi,1, ..., bi,k-1 e Z251
+        # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
+        # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
         for i in range(0, self.secret_image.total_pixels, block_size):
-            # The dealer generates a k-1 degree polynomial fi(x) = ai,0 + ai,1x + ... + ai,k-1x^k-1 e Z251[x]
-            coefficients = [Z251(self.secret_image.image_data[i + j]) for j in range(self.k - 1)]
-            fi = Polynomial(coefficients)
+            # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
+            fi = Polynomial(coefficients=[Z251(self.secret_image.image_data[i + j]) for j in range(self.k - 1)])
 
-            # The dealer chooses a random integer ri and computes two pixels bi,0 and bi,1 which satisfy that
-            # ri*ai,0 + bi,0 = 0 (mod 251) and ri*ai,1 + bi,1 = 0 (mod 251)
-            # and then generates another k-1 degree polynomial gi(x) = bi,0 + bi,1x + ... + bi,k-1x^k-1 e Z251[x]
+            # The dealer chooses a random integer ri and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
+            # ri*a_{i,0} + b_{i,0} = 0 (mod 251) and ri*a_{i,1} + b_{i,1} = 0 (mod 251)
+            # and then generates another k-1 degree polynomial gi(x) = b_{i,0} + b_{i,1}x + ... + b_{i,k-1}x^k-1 in Z251[x]
 
             ri = self.ri
+
             # a0 and a1 cant be 0, otherwise they are computed as 1
             a0 = self.secret_image.image_data[i] if self.secret_image.image_data[i] != 0 else 1
             a1 = self.secret_image.image_data[i + 1] if self.secret_image.image_data[i + 1] != 0 else 1
@@ -55,15 +47,14 @@ class DistributeImage:
             b0 = Z251(ri * a0 * -1)
             b1 = Z251(ri * a1 * -1)
 
-            coefficients = [Z251(self.secret_image.image_data[i + j + self.k - 1]) for j in range(self.k - 1)]
-            gi = Polynomial(coefficients)
+            gi = Polynomial(coefficients=[Z251(self.secret_image.image_data[i + j + self.k - 1]) for j in range(self.k - 1)])
 
             gi.set_coefficient(0, b0)
             gi.set_coefficient(1, b1)
 
-            # For each block Bi, i e [1, t] the dealer computes sub-shadow
-            # vi,j = {mi,j; di,j}, mi,j = fi(j) and di,j = gi(j) for j e [1, n] for each participant Pj
-            # the shadow Sj for Pj is Sj = {v1,j, v2,j, ..., vt,j}
+            # For each block Bi (i in [1, t]) the dealer computes sub-shadow
+            # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = gi(j) for j in [1, n] for each participant Pj
+            # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
 
             # self.images is the amount of participants
             shadow_image = []

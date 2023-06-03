@@ -8,6 +8,9 @@ class BMPFile:
         self.header = {}
         self.image_data = []
 
+        self.read_header()
+        self.read_image_data()
+
     @property
     def total_pixels(self):
         return self.header['width'] * self.header['height']
