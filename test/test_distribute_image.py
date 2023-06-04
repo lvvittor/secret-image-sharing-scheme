@@ -4,25 +4,24 @@ from src.distribute_image import DistributeImage
 
 
 class DistributeImageTests(unittest.TestCase):
-    FOLDER_PATH = Path("images/shares")
-    K = 4
-    P = 3
+    FOLDER_PATH = Path("images/covers")
+    K = 2
     BLOCK_SIZE = 2 * K - 2
 
     def setUp(self):
-        """Get the list of BMP files in the test/images folder"""
+        """Get the list of BMP files"""
         self.bmp_files = [file for file in os.listdir(DistributeImageTests.FOLDER_PATH) if file.endswith(".bmp")]
 
 
     def test_generate_shadows(self):
         # Create an instance of DistributeImage with the secret image
-        distribute_image = DistributeImage("images/shares/Gustavoshare.bmp", k=DistributeImageTests.K, participants=DistributeImageTests.P)
+        distribute_image = DistributeImage("images/shares/Gustavoshare.bmp", k=DistributeImageTests.K, participants=len(self.bmp_files))
         
         # Generate shadows
         shadows = distribute_image.generate_shadows()
 
-        self.assertEqual(len(shadows), DistributeImageTests.P)
-        self.assertEqual(len(shadows[0]), int(distribute_image.secret_image.total_pixels / DistributeImageTests.P))
+        self.assertEqual(len(shadows), len(self.bmp_files))
+        self.assertEqual(len(shadows[0]), int(distribute_image.secret_image.total_pixels / len(self.bmp_files)))
         
         # Add more assertions to check the properties of the generated shadows
     @unittest.skip("Skipping this test for a reason.")    

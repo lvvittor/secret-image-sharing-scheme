@@ -6,43 +6,51 @@ from src.z251 import Z251
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
 
-    def __init__(self, secret_image: str, k: int, participants: int):
+    def __init__(self, secret_image: str, k: int, participants: list[BMPFile]):
         if k not in DistributeImage.ALLOWED_K_VALUES:
             raise ValueError(f"Invalid k value: {k}. Allowed values: {DistributeImage.ALLOWED_K_VALUES}")
 
         self.secret_image = BMPFile(file_path=secret_image)
         self.k = k
         self.participants = participants
+        self.block_size = 2 * self.k - 2
+
+        if not self.secret_image.is_dibisible_by(self.block_size):
+            raise ValueError(f"Image size must be divisible by {self.block_size}")
+
 
     @property
     def ri(self):
         return random.randint(1, 251)
     
+    @property
+    def total_blocks(self):
+        return self.secret_image.total_pixels // self.block_size
+    
     def generate_shadows(self):
-
-        block_size = 2 * self.k - 2
-        if not self.secret_image.is_dibisible_by(block_size):
-            raise ValueError(f"Image size must be divisible by {block_size}")
         shadows = []
-        blocks_funcs = {}
-        for i in range(int(self.secret_image.total_pixels/block_size)):
-            blocks_funcs.update({i+1: []})
-        #print(f"blocks_funcs: {blocks_funcs}")
+        v_ij = {}
+        
+        # v_ij should be a dictionary with the following structure:
+        # v_ij = {1: [f_1(j), g_1(j)], 2: [f_2(j), g_2(j)], ..., t: [f_t(j), g_t(j)]}
+        for i in range(self.total_blocks):
+            v_ij.update({i+1: []})
+
         image_array = [byte for row in self.secret_image.image_data for byte in row]
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
         # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
-        for i in range(0, self.secret_image.total_pixels, block_size):
+        for i in range(0, self.secret_image.total_pixels, self.block_size):
             # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
             fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k - 1)])
 
-            # The dealer chooses a random integer ri and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
-            # ri*a_{i,0} + b_{i,0} = 0 (mod 251) and ri*a_{i,1} + b_{i,1} = 0 (mod 251)
-            # and then generates another k-1 degree polynomial gi(x) = b_{i,0} + b_{i,1}x + ... + b_{i,k-1}x^k-1 in Z251[x]
+            # The dealer chooses a random integer r_i and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
+            # r_i*a_{i,0} + b_{i,0} = 0 (mod 251) and r_i*a_{i,1} + b_{i,1} = 0 (mod 251)
+            # and then generates another k-1 degree polynomial g_i(x) = b_{i,0} + b_{i,1}x + ... + b_{i,k-1}x^k-1 in Z251[x]
 
             ri = self.ri
 
-            # a0 and a1 cant be 0, otherwise they are computed as 1
+            # a_0 and a_1 cant be 0, otherwise they are computed as 1
             a0 = image_array[i] if image_array[i] != 0 else 1
             a1 = image_array[i + 1] if image_array[i + 1] != 0 else 1
 
@@ -54,20 +62,20 @@ class DistributeImage:
             gi.set_coefficient(0, b0)
             gi.set_coefficient(1, b1)
 
+            dict_idx = i // self.block_size + 1
+            v_ij[dict_idx].append(fi)
+            v_ij[dict_idx].append(gi)
 
-            blocks_funcs[int(i/block_size)+1].append(fi)
-            blocks_funcs[int(i/block_size)+1].append(gi)
-
-        # For each block Bi (i in [1, t]) the dealer computes sub-shadow
-        # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = gi(j) for j in [1, n] for each participant Pj
-        # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
-        #print(f"index of blocks_funcs: {int(i/block_size)+1}")
-        #print(f"element of blocks_funcs[{int(i/block_size)+1}]: {blocks_funcs[int(i/block_size)+1]}")
-        for i in range(self.participants):
+        # For each block B_i (i in [1, t]) the dealer computes sub-shadow
+        # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = g_i(j) for j in [1, n] for each participant P_j
+        # the shadow S_j for P_j is S_j = (v_{1,j}, v_{2,j}, ..., v_{t,j})
+        for i in range(len(self.participants)):
             pratial_shadows = []
-            for j in range(int(self.secret_image.total_pixels/block_size)):
-                pratial_shadows.append(blocks_funcs[j+1][0].evaluate(i+1))
-                pratial_shadows.append(blocks_funcs[j+1][1].evaluate(i+1))
+            for j in range(self.total_blocks):
+                m_ij = v_ij[j+1][0].evaluate(i+1)
+                d_ij = v_ij[j+1][1].evaluate(i+1)
+                pratial_shadows.append(m_ij)
+                pratial_shadows.append(d_ij)
             shadows.append(pratial_shadows)
         return shadows
 

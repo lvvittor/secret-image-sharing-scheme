@@ -2,8 +2,8 @@
 
 import argparse
 from pathlib import Path
-from distribute_image import DistributeImage
-from bmp_file import BMPFile
+from src.distribute_image import DistributeImage
+from src.bmp_file import BMPFile
 
 def distribute_image(
     secret_image: str,
@@ -31,11 +31,11 @@ def distribute_image(
 
     # Perform distribution of the secret image
     print(
-        f"Distributing the secret image '{secret_image}' into {len(images)} images"
+        f"Distributing the secret image '{secret_image}' into {len(images)} images with path: {images}"
     )
 
     # Add your logic here to distribute the secret image into the images in the directory
-    distribute_image = DistributeImage(secret_image, k, images)
+    distribute_image = DistributeImage(secret_image, k, participants=[BMPFile(image) for image in images])
     distribute_image.generate_shadows()
 
 
