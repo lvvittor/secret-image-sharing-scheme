@@ -26,8 +26,11 @@ class DistributeImage:
         block_size = 2 * self.k - 2
         if not self.secret_image.is_dibisible_by(block_size):
             raise ValueError(f"Image size must be divisible by {block_size}")
-        
         shadows = []
+        blocks_funcs = {}
+        for i in range(int(self.secret_image.total_pixels/block_size)):
+            blocks_funcs.update({i+1: []})
+        #print(f"blocks_funcs: {blocks_funcs}")
         image_array = [byte for row in self.secret_image.image_data for byte in row]
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
         # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
@@ -54,19 +57,21 @@ class DistributeImage:
             gi.set_coefficient(0, b0)
             gi.set_coefficient(1, b1)
 
-            # For each block Bi (i in [1, t]) the dealer computes sub-shadow
-            # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = gi(j) for j in [1, n] for each participant Pj
-            # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
 
-            # TODO: refactor this, to actually generate the shadows
-            shadow_image = []
-            for j in range(self.participants):
-                mi = fi.evaluate(j + 1)
-                di = gi.evaluate(j + 1)
-                shadow_image.append(mi)
-                shadow_image.append(di)
-            
-            shadows.append(shadow_image)
+            blocks_funcs[int(i/block_size)+1].append(fi)
+            blocks_funcs[int(i/block_size)+1].append(gi)
+
+        # For each block Bi (i in [1, t]) the dealer computes sub-shadow
+        # v_{i,j} = (m_{i,j}; d_{i,j}) with: m_{i,j} = fi(j) and d_{i,j} = gi(j) for j in [1, n] for each participant Pj
+        # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
+        #print(f"index of blocks_funcs: {int(i/block_size)+1}")
+        #print(f"element of blocks_funcs[{int(i/block_size)+1}]: {blocks_funcs[int(i/block_size)+1]}")
+        for i in range(self.participants):
+            pratial_shadows = []
+            for j in range(int(self.secret_image.total_pixels/block_size)):
+                pratial_shadows.append(blocks_funcs[j+1][0].evaluate(i+1))
+                pratial_shadows.append(blocks_funcs[j+1][1].evaluate(i+1))
+            shadows.append(pratial_shadows)
         return shadows
 
     # TODO: check if bits modification is being done correctly

@@ -21,9 +21,8 @@ class DistributeImageTests(unittest.TestCase):
         # Generate shadows
         shadows = distribute_image.generate_shadows()
 
-        self.assertEqual(len(shadows), distribute_image.secret_image.total_pixels/self.BLOCK_SIZE)
-        for i in range(len(shadows)):
-            self.assertEqual(len(shadows[i]), self.BLOCK_SIZE)
+        self.assertEqual(len(shadows), self.P)
+        self.assertEqual(len(shadows[0]), int(distribute_image.secret_image.total_pixels/self.P))
         
         # Add more assertions to check the properties of the generated shadows
     @unittest.skip("Skipping this test for a reason.")    
