@@ -32,7 +32,6 @@ class DistributeImageTests(unittest.TestCase):
             self.assertEqual(len(shadows[0]), 2 * distribute_image.total_blocks)  # |S_j| = 2 * t (where t is the number of blocks in the secret image, and S_j is the shadow j)
             self.assertEqual(len(shadows[0]), distribute_image.secret_image.total_pixels // (distribute_image.k - 1)) # |S_j| = |I| / (k - 1) (where I is the secret image, and S_j is the shadow j)
 
-        
     @unittest.skip("Skipping this test for a reason.")    
     def test_lsb_hide(self):
         for k, block_size in DistributeImageTests.K_AND_BLOCK_SIZES:

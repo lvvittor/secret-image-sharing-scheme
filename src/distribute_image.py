@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 from src.polynomial import Polynomial
 from src.bmp_file import BMPFile
@@ -30,7 +31,7 @@ class DistributeImage:
     def generate_shadows(self):
         shadows = []
         v_ij = {}
-        
+
         # v_ij should be a dictionary with the following structure:
         # v_ij = {1: [f_1(j), g_1(j)], 2: [f_2(j), g_2(j)], ..., t: [f_t(j), g_t(j)]}
         for i in range(self.total_blocks):
@@ -77,6 +78,7 @@ class DistributeImage:
                 pratial_shadows.append(m_ij)
                 pratial_shadows.append(d_ij)
             shadows.append(pratial_shadows)
+        self.lsb_hide(shadows, self.participants)
         return shadows
 
     # TODO: check if bits modification is being done correctly
@@ -84,19 +86,39 @@ class DistributeImage:
         mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used 
 
         for i, shadow in enumerate(shadows):
+            #print(f"i: {i}")
+            #print(f"type(images): {type(images)}")
             image = images[i]
+            #print(f"image.image_data[2:3]: {image.image_data[2:3]}")
+            #print(f"len(image.image_data[2:3]): {len(image.image_data[2:3][0])}")
+            #print(f"len(bytearray(image)): {len(bytearray(image.image_data))}")
+            #print(f"image.header['reserved1'] = {image.header['reserved1']}")
+            image.header['reserved1'] = i
+            #print(f"new image.header['reserved1'] = {image.header['reserved1']}")
+            shadow_bytes = shadow
 
-            shadow_bytes = bytearray(shadow)
-            image_bytes = bytearray(image)
+            image_bytes = [byte for row in image.image_data for byte in row]
+
+            # TODO: check if this actually works
+            byte_number = 54
+            byte_position = byte_number % len(image_bytes)
+            initial_offset = byte_position if byte_position >= 54 else 0
 
             for j, byte in enumerate(shadow_bytes):
-                # Modify the LSB4 bits of the corresponding byte in the image
-                image_bytes[j] = (image_bytes[j] & mask[0]) | (byte & mask[1])  
-            # Update the modified image
-            images[i] = bytes(image_bytes)
+                # Modificar los bits LSB4 del byte correspondiente en la imagen
+                image_byte = int.from_bytes(image_bytes[j + initial_offset], byteorder='little', signed=False)
+                #print(f"image_bytes[j + initial_offset]: {image_byte}")
+                #print(f"type(image_bytes[j + initial_offset]): {type(image_byte)}")
+                #print(f"mask[0]: {mask[0]}")
+                #print(f"byte: {byte.value}")
+                #print(f"type(byte): {type(byte.value)}")
+                #print(f"mask[1]: {mask[1]}")
+                image_bytes[j + initial_offset] = (image_byte & mask[0]) | (byte.value & mask[1])
+            # Actualizar la imagen modificada
+            #images[i] = bytes(image_bytes)
+            images[i].image_data = image_bytes
 
     def lsb_mask(self, k):
         # If k is 3 or 4, the dealer hides the secret image in LSB4
         return (0xFC, 0x03) if k not in [3, 4] else (0xF0, 0x0F)
-
 

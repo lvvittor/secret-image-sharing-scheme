@@ -31,12 +31,14 @@ def distribute_image(
 
     # Perform distribution of the secret image
     print(
-        f"Distributing the secret image '{secret_image}' into {len(images)} images with path: {images}"
+        f"Distributing the secret image '{secret_image}' into {len(images)} images with path: {images}..."
     )
 
     # Add your logic here to distribute the secret image into the images in the directory
     distribute_image = DistributeImage(secret_image, k, participants=[BMPFile(image) for image in images])
     distribute_image.generate_shadows()
+
+    print(f"Image successfully distributed!")
 
 
 def recover_image(
