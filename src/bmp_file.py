@@ -3,10 +3,16 @@ class BMPFile:
     BITS_PER_BYTE = 8
     ROW_ALIGNMENT = 4
 
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.header = {}
-        self.image_data = []
+    def __init__(self, file_path=None, header=None, image_data=None):
+        if file_path:
+            self.file_path = file_path
+            self.header = {}
+            self.image_data = []
+        elif header and image_data:
+            self.header = header
+            self.image_data = image_data
+        else:
+            raise ValueError("Invalid arguments")
 
     @property
     def total_pixels(self):

@@ -2,21 +2,24 @@ import random
 from bmp_file import BMPFile
 from polynomial import Polynomial
 from z251 import Z251
+import numpy as np
 
 class RecoverImage:
-    def __init__(self, shadows: list[BMPFile]):
+    def __init__(self, shadows: list[BMPFile], k):
         self.shadows = shadows
-        self.k = len(shadows)
+        self.shadows_amount = len(shadows)
+        if self.shadows_amount < k:
+            raise ValueError(f"Invalid k value: {k}. At least {k} shadows are required")
 
     # Input k shadows, without loss of generality (S1, S2, ..., Sk)
     def recover(self):
-        secret_image = []
+        secret_data = []
         # Extract vi,j = (mi,j, di,j), i = 1,2,...,t, j = 1,2,...,k from S1, S2, ..., Sk
         for shadow in self.shadows:
             mij = []
             dij = []
 
-            for i in range(0, self.k):
+            for i in range(0, self.shadows_amount):
                 mij = shadow.image_data[i]
                 dij = shadow.image_data[i + 1]
 
@@ -40,11 +43,16 @@ class RecoverImage:
                 return None
             
             # Recover the 2k - 2 pixel block Bi = {ai,0, ai,1, ..., ai,k-1, bi,2, bi,3, ..., bi,k-1}
-            bi = fi.coefficients[:self.k] + gi.coefficients[2:self.k]
+            bi = fi.coefficients[:self.shadows_amount] + gi.coefficients[2:self.shadows_amount]
 
             # Append the recovered block to the secret image
-            secret_image.append(bi)
-
+            secret_data.extend(bi)
+        
+        # Copy the header from the first shadow
+        secret_header = self.shadows[0].header
+        secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
+        secret_image = BMPFile(header=secret_header, image_data=secret_matrix)
+        
         return secret_image
     
     def is_cheating(self, a0, a1, b0, b1):
