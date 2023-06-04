@@ -6,15 +6,16 @@ class BMPFile:
     BITS_PER_BYTE = 8
     ROW_ALIGNMENT = 4
 
-    def __init__(self, file_path=None, noisy_image=None):
-        self.file_path = file_path
-        self.header = {}
-        self.image_data = []
+    def __init__(self, file_path=None, header=None, image_data=None):
         if file_path:
-            self.read_header()
-            self.read_image_data()
+            self.file_path = file_path
+            self.header = {}
+            self.image_data = []
+        elif header and image_data:
+            self.header = header
+            self.image_data = image_data
         else:
-            self.create_noisy_image(noisy_image)
+            raise ValueError("Invalid arguments")
 
     @property
     def total_pixels(self):

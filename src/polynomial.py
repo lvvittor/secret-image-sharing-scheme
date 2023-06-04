@@ -23,7 +23,8 @@ class Polynomial:
         return result
     
     # TODO: Check if this is correct!
-    def interpolate(self, points: List[Tuple[Z251, Z251]]) -> Polynomial:
+    @staticmethod
+    def interpolate(self, points: List[Tuple[Z251, Z251]]) -> "Polynomial":
         """
         Returns the polynomial that interpolates the given points
         
