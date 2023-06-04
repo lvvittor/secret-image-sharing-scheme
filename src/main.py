@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 from distribute_image import DistributeImage
+from bmp_file import BMPFile
 
 def distribute_image(
     secret_image: str,

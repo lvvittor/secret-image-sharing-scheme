@@ -6,20 +6,17 @@ from src.z251 import Z251
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
 
-    def __init__(self, secret_image, k, participants):
+    def __init__(self, secret_image: str, k: int, participants: int):
         if k not in DistributeImage.ALLOWED_K_VALUES:
             raise ValueError(f"Invalid k value: {k}. Allowed values: {DistributeImage.ALLOWED_K_VALUES}")
 
-        self.secret_image = BMPFile(secret_image)
+        self.secret_image = BMPFile(file_path=secret_image)
         self.k = k
         self.participants = participants
 
     @property
     def ri(self):
-        """Random integer between 1 and 251"""
         return random.randint(1, 251)
-    
-    
     
     def generate_shadows(self):
 
