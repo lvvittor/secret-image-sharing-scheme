@@ -1,15 +1,20 @@
+import os
+import random
+
 class BMPFile:
     HEADER_BYTES = 54
     BITS_PER_BYTE = 8
     ROW_ALIGNMENT = 4
 
-    def __init__(self, file_path):
+    def __init__(self, file_path=None, noisy_image=None):
         self.file_path = file_path
         self.header = {}
         self.image_data = []
-        print(f"Path: {file_path} \n type: {type(file_path)}")
-        self.read_header()
-        self.read_image_data()
+        if file_path:
+            self.read_header()
+            self.read_image_data()
+        else:
+            self.create_noisy_image(noisy_image)
 
     @property
     def total_pixels(self):
@@ -38,6 +43,14 @@ class BMPFile:
         """
         return self.total_pixels % n == 0
 
+    # TODO: this function will create a
+    def create_image(self, noisy_image):
+        """
+        Arguments:
+        noisy_image {int} -- Number of participant image
+
+        """
+        pass
 
     def read_header(self):
         with open(self.file_path, 'rb') as file:
@@ -204,4 +217,3 @@ class BMPFile:
                     secret_bin = secret_bin[8:]
 
         return bytes(secret_data)
- 
