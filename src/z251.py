@@ -6,6 +6,7 @@ class Z251:
         print(a + b)  # Output: 24
         print(a - b)  # Output: 170
         print(a * b)  # Output: 60
+        print(a ** 2) # Output: 40
         print(a / b)  # Output: 173
         print(a == b) # Output: False
         print(a != b) # Output: True
@@ -267,7 +268,10 @@ class Z251:
     }
 
     def __init__(self, value):
-        self.value = value % 251
+        #print(f"value: {value}")
+        #print(f"type(value): {type(value)}")
+        #print(f"treated value: {int.from_bytes(value, byteorder='little', signed=False) if isinstance(value, bytes) else value}")
+        self.value = int.from_bytes(value, byteorder='little', signed=False) if isinstance(value, bytes) else value % 251
 
     def __str__(self):
         return str(self.value)
@@ -285,7 +289,17 @@ class Z251:
     def __mul__(self, other):
         if isinstance(other, Z251):
             return Z251((self.value * other.value) % 251)
+        elif isinstance(other, int):
+            return Z251((self.value * other) % 251)
         raise ValueError("Unsupported operand type for *")
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __pow__(self, exponent):
+        if isinstance(exponent, int):
+            return Z251(pow(self.value, exponent, 251))
+        raise ValueError("Unsupported operand type for pow()")
 
     def __truediv__(self, other):
         if isinstance(other, Z251):
