@@ -14,7 +14,7 @@ class DistributeImageTests(unittest.TestCase):
     def test_generate_shadows(self):
         
         # Create an instance of DistributeImage with the secret image
-        distribute_image = DistributeImage("images/shares/Gustavoshare.bmp", k=4, n=3)
+        distribute_image = DistributeImage("images/shares/Gustavoshare.bmp", k=4, images=3)
         
         # Generate shadows
         shadows = distribute_image.generate_shadows()
