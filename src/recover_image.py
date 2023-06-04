@@ -1,7 +1,7 @@
 import random
-from bmp_file import BMPFile
-from polynomial import Polynomial
-from z251 import Z251
+from src.bmp_file import BMPFile
+from src.polynomial import Polynomial
+from src.z251 import Z251
 import numpy as np
 from typing import List, Tuple
 
@@ -11,9 +11,20 @@ class RecoverImage:
         self.shadows_amount = len(shadows)
         if self.shadows_amount < k:
             raise ValueError(f"Invalid k value: {k}. At least {k} shadows are required")
-        self.block_size = 2 * k - 2 
-        self.secret_length = shadow_length * (k - 1)
-        self.blocks_amount = self.secret_length / self.block_size
+        self.block_size = 2 * k - 2
+        self.secret_length = shadow_length
+        self.blocks_amount = self.secret_length // self.block_size
+        
+        print("K")
+        print(k)
+        print("BLOCK SIZE")
+        print(self.block_size)
+        print("SHADOW LENGTH")
+        print(shadow_length)
+        print("SECRET LENGTH")
+        print(self.secret_length)
+        print("BLOCKS AMOUNT")
+        print(self.blocks_amount)
 
     # Input k shadows, without loss of generality (S1, S2, ..., Sk)
     def recover(self):
@@ -34,13 +45,17 @@ class RecoverImage:
             ids.append(shadow.header['reserved1'])
             
         # For each group of vi,1, vi,2, ..., vi,k, i = 1,2,...,t, reconstruct fi(x) and gi(x)
-        # from mi,1, mi,2, ..., mi,k and di,1, di,2, ..., di,k using Lagrange interpolation
+        # from mi,1, mi,2, ..., mi,k and di,1, di,2, ..., di,k using Lagrange interpolation+
+
         for block in range(0, self.blocks_amount):
             fi_points: List[Tuple[Z251, Z251]] = [(id, m[block]) for id, m in zip(ids, mij)]
             gi_points: List[Tuple[Z251, Z251]] = [(id, d[block]) for id, d in zip(ids, dij)]
 
-            fi = Polynomial.interpolate(fi_points)
-            gi = Polynomial.interpolate(gi_points)
+            print("FI POINTS")
+            print(fi_points)
+
+            fi = Polynomial(points=fi_points)
+            gi = Polynomial(points=gi_points)
 
             # Let ai,0, ai,1, bi,0 and bi,1 be the coefficients of x^0 and x^1 in fi(x) and gi(x) 
             a0 = fi.coefficients[0]
