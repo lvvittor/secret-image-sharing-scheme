@@ -6,13 +6,13 @@ from src.z251 import Z251
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
 
-    def __init__(self, secret_image, k, images):
+    def __init__(self, secret_image, k, participants):
         if k not in DistributeImage.ALLOWED_K_VALUES:
             raise ValueError(f"Invalid k value: {k}. Allowed values: {DistributeImage.ALLOWED_K_VALUES}")
 
         self.secret_image = BMPFile(secret_image)
         self.k = k
-        self.images = images
+        self.participants = participants
 
     @property
     def ri(self):
@@ -59,9 +59,8 @@ class DistributeImage:
             # the shadow Sj for Pj is Sj = (v_{1,j}, v_{2,j}, ..., v_{t,j})
 
             # TODO: refactor this, to actually generate the shadows
-            # self.images is the amount of participants
             shadow_image = []
-            for j in range(self.images):
+            for j in range(self.participants):
                 mi = fi.evaluate(j + 1)
                 di = gi.evaluate(j + 1)
                 shadow_image.append(mi)
