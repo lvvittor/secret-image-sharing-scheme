@@ -18,8 +18,8 @@ class DistributeImageTests(unittest.TestCase):
         
         # Generate shadows
         shadows = distribute_image.generate_shadows()
-        print(f"Shadows: {shadows}")
-        print("-----------------------------\n")
+        #print(f"Shadows: {shadows}")
+        #print("-----------------------------\n")
         
         # Verify that the shadows are generated correctly
         self.assertEqual(len(shadows), 2)  # Assuming the secret image can be divided into 2 blocks of size 2k-2

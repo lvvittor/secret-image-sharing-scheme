@@ -28,13 +28,13 @@ class DistributeImage:
             raise ValueError(f"Image size must be divisible by {block_size}")
         
         shadows = []
-
+        image_array = [byte for row in self.secret_image.image_data for byte in row]
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
         # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
         for i in range(0, self.secret_image.total_pixels, block_size):
             # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
-            fi = Polynomial(coefficients=[Z251(self.secret_image.image_data[i + j]) for j in range(self.k - 1)])
+            fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k - 1)])
 
             # The dealer chooses a random integer ri and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
             # ri*a_{i,0} + b_{i,0} = 0 (mod 251) and ri*a_{i,1} + b_{i,1} = 0 (mod 251)
@@ -43,13 +43,13 @@ class DistributeImage:
             ri = self.ri
 
             # a0 and a1 cant be 0, otherwise they are computed as 1
-            a0 = self.secret_image.image_data[i] if self.secret_image.image_data[i] != 0 else 1
-            a1 = self.secret_image.image_data[i + 1] if self.secret_image.image_data[i + 1] != 0 else 1
+            a0 = image_array[i] if image_array[i] != 0 else 1
+            a1 = image_array[i + 1] if image_array[i + 1] != 0 else 1
 
             b0 = Z251(ri * a0 * -1)
             b1 = Z251(ri * a1 * -1)
 
-            gi = Polynomial(coefficients=[Z251(self.secret_image.image_data[i + j + self.k - 1]) for j in range(self.k - 1)])
+            gi = Polynomial(coefficients=[Z251(image_array[i + self.k - 1 + j]) for j in range(self.k - 1)])
 
             gi.set_coefficient(0, b0)
             gi.set_coefficient(1, b1)
