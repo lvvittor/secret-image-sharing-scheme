@@ -67,8 +67,8 @@ class RecoverImage:
                 fi_points.append(mik)
                 gi_points.append(dik)
 
-            fi = Polynomial(points=fi_points)
-            gi = Polynomial(points=gi_points)
+            fi = Polynomial.interpolate(points=fi_points)
+            gi = Polynomial.interpolate(points=gi_points)
 
             # Let ai,0, ai,1, bi,0 and bi,1 be the coefficients of x^0 and x^1 in fi(x) and gi(x) 
             a0 = fi.coefficients[0]
