@@ -3,6 +3,7 @@
 import argparse
 from pathlib import Path
 from src.distribute_image import DistributeImage
+from src.recover_image import RecoverImage
 from src.bmp_file import BMPFile
 
 def distribute_image(
@@ -60,6 +61,9 @@ def recover_image(
         f"Recovering the secret image '{secret_image}' from {len(images)} images"
     )
     # Add your logic here to recover the secret image from the images in the directory
+    bmp_images = [BMPFile(image) for image in images]
+    recover_image = RecoverImage(shadows=bmp_images, k=k, shadow_length=bmp_images[0].total_pixels)
+    recover_image.recover()
 
 
 def main():

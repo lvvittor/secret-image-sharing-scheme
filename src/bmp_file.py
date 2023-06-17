@@ -11,6 +11,8 @@ class BMPFile:
             self.file_path = file_path
             self.header = {}
             self.image_data = []
+            self.read_header()
+            self.read_image_data()
         elif header and image_data:
             self.header = header
             self.image_data = image_data

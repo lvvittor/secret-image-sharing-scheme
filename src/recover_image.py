@@ -1,7 +1,7 @@
 import random
-from bmp_file import BMPFile
-from polynomial import Polynomial
-from z251 import Z251
+from src.bmp_file import BMPFile
+from src.polynomial import Polynomial
+from src.z251 import Z251
 import numpy as np
 from typing import List, Tuple
 
@@ -37,11 +37,13 @@ class RecoverImage:
         mij = []
         dij = []
         ids = []
-        
+
         for shadow in self.shadows:
             mi = []
             di = []
             row_len = len(shadow.image_data)
+            print("ASD")
+            print(shadow.image_data[0][0])
             for i in range(0, self.blocks_amount, 2):
                 # Should I be using LSB here??
                 mi.append(int.from_bytes(shadow.image_data[i // row_len][i % row_len], 'little'))
