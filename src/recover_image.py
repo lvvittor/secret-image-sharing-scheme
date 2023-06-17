@@ -3,6 +3,7 @@ from bmp_file import BMPFile
 from polynomial import Polynomial
 from z251 import Z251
 import numpy as np
+from typing import List, Tuple
 
 class RecoverImage:
     def __init__(self, shadows: list[BMPFile], k, shadow_length):
@@ -33,6 +34,10 @@ class RecoverImage:
     def recover(self):
         secret_data = []
         # Extract vi,j = (mi,j, di,j), i = 1,2,...,t, j = 1,2,...,k from S1, S2, ..., Sk
+        mij = []
+        dij = []
+        ids = []
+        
         for shadow in self.shadows:
             mi = []
             di = []
