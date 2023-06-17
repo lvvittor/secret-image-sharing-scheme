@@ -302,6 +302,11 @@ class Z251:
         raise ValueError("Unsupported operand type for pow()")
 
     def __truediv__(self, other):
+        print("TRUEDIV")
+        print(f"self: {self}")
+        print(f"other: {other}")
+        print("OTHER TYPE")
+        print(type(other))
         if isinstance(other, Z251):
             if other.value == 0:
                 raise ValueError("Division by zero is not allowed")

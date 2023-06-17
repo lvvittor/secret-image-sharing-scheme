@@ -42,16 +42,19 @@ class RecoverImage:
             mi = []
             di = []
             row_len = len(shadow.image_data)
-            print("ASD")
-            print(shadow.image_data[0][0])
             for i in range(0, self.blocks_amount, 2):
-                # Should I be using LSB here??
-                mi.append(int.from_bytes(shadow.image_data[i // row_len][i % row_len], 'little'))
-                di.append(int.from_bytes(shadow.image_data[i // row_len][(i + 1) % row_len], 'little'))
+                mi_byte = int.from_bytes(shadow.image_data[i // row_len][i % row_len], 'little')
+                di_byte = int.from_bytes(shadow.image_data[i // row_len][(i + 1) % row_len], 'little')
+
+                # extract the least significant bits from the bytes
+                mi.append(Z251(mi_byte & self.lsb_mask(self.k)))
+
+                di.append(Z251(di_byte & self.lsb_mask(self.k)))
             mij.append(mi)
             dij.append(di)
-            ids.append(shadow.header['reserved1'])
-            
+            ids.append(Z251(shadow.header['reserved1']))
+
+
         # For each group of vi,1, vi,2, ..., vi,k, i = 1,2,...,t, reconstruct fi(x) and gi(x)
         # from mi,1, mi,2, ..., mi,k and di,1, di,2, ..., di,k using Lagrange interpolation+
 
@@ -59,8 +62,8 @@ class RecoverImage:
             fi_points = []
             gi_points = []
             for i in range(0, self.k):
-                mik: Tuple[Z251, Z251] = (Z251(ids[i]), Z251(mij[i][block]))
-                dik: Tuple[Z251, Z251] = (Z251(ids[i]), Z251(dij[i][block]))
+                mik: Tuple[Z251, Z251] = (ids[i], mij[i][block])
+                dik: Tuple[Z251, Z251] = (ids[i], dij[i][block])
                 fi_points.append(mik)
                 gi_points.append(dik)
 
@@ -99,3 +102,7 @@ class RecoverImage:
             if r * a0 + b0 == Z251(0) and r * a1 + b1 == Z251(0):
                 return False
         return True
+    
+    def lsb_mask(self, k):
+        # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
+        return 0b1111 if k < 5 else 0b11
