@@ -62,7 +62,7 @@ def recover_image(
     )
     # Add your logic here to recover the secret image from the images in the directory
     bmp_images = [BMPFile(image) for image in images]
-    recover_image = RecoverImage(shadows=bmp_images, k=k, shadow_length=bmp_images[0].total_pixels)
+    recover_image = RecoverImage(shares=bmp_images, k=k, share_length=bmp_images[0].total_pixels)
     recover_image.recover()
 
 
