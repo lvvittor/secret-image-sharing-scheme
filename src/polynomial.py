@@ -62,10 +62,7 @@ class Polynomial:
                         li *= Z251(-1) * points[j][0] / (points[i][0] - points[j][0])
 
                 curr_coefficient += y * li
-            
-            print(f"YP CACHE {ca}")
-            for y in yp_cache:
-                print(y)
+  
             ca += 1
             coefficients.append(curr_coefficient)
 
