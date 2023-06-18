@@ -82,7 +82,7 @@ class BMPFile:
     def read_image_data(self):
         with open(self.file_path, 'rb') as file:
             # Skip the first 54 bytes corresponding to the header
-            file.seek(BMPFile.HEADER_BYTES)
+            file.seek(self.header['data_offset'])
 
             # Calculate the padding for each row to ensure it is a multiple of ROW_ALIGNMENT bytes
             bits_per_pixel = self.header['bits_per_pixel']

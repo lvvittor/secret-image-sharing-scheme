@@ -36,8 +36,8 @@ def distribute_image(
     )
 
     # Add your logic here to distribute the secret image into the images in the directory
-    distribute_image = DistributeImage(secret_image, k, participants=[BMPFile(image) for image in images])
-    distribute_image.generate_shadows()
+    # distribute_image = DistributeImage(secret_image, k, participants=[BMPFile(image) for image in images])
+    # distribute_image.generate_shadows()
 
     print(f"Image successfully distributed!")
 

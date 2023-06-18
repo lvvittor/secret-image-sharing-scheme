@@ -3,6 +3,7 @@ import random
 from src.polynomial import Polynomial
 from src.bmp_file import BMPFile
 from src.z251 import Z251
+from src.utils import flatten_array
 
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]

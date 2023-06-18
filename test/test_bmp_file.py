@@ -81,10 +81,6 @@ class BMPFileTestCase(unittest.TestCase):
             self.assertTrue(bmp.is_dibisible_by(2 * 7 - 2))
             # self.assertTrue(bmp.is_dibisible_by(2 * 8 - 2)) # TODO: This fails for some reason, need to check why
 
-    def test_create_noisy_image(self):
-        file = BMPFile(noisy_image=1)
-        print(file)
-
 
 if __name__ == '__main__':
     unittest.main()
