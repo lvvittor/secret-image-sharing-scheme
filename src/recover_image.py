@@ -56,12 +56,11 @@ class RecoverImage:
         # For each group of vi,1, vi,2, ..., vi,k, i = 1,2,...,t, reconstruct fi(x) and gi(x)
         # from mi,1, mi,2, ..., mi,k and di,1, di,2, ..., di,k using Lagrange interpolation+
 
-        for block in range(0, self.blocks_amount, 2): # BLOCKS AMOUNT 11250 
+        for block in range(0, self.shadow_length, 2):
             fi_points = []
             gi_points = []
 
-            for i in range(0, self.k): # BYTEARRAY 5625
-                # print(f"BLOCK: {block} - SHARE: {i}")
+            for i in range(0, self.k):
                 mik: Tuple[Z251, Z251] = (ids[i], Z251(shadows[i][block]))
                 dik: Tuple[Z251, Z251] = (ids[i], Z251(shadows[i][block + 1]))
                 fi_points.append(mik)
@@ -85,13 +84,17 @@ class RecoverImage:
                 return None
             
             # Recover the 2k - 2 pixel block Bi = {ai,0, ai,1, ..., ai,k-1, bi,2, bi,3, ..., bi,k-1}
-            bi = fi.coefficients[:self.k] + gi.coefficients[2:self.k]
+            # each coefficient needs to be transformed to a byte
+            bi = []
+            for i in range(0, self.k):
+                bi.append(fi.coefficients[i].value.to_bytes(1, 'big'))
+            for i in range(2, self.k):
+                bi.append(gi.coefficients[i].value.to_bytes(1, 'big'))
 
             # Append the recovered block to the secret image
             secret_data.extend(bi)
         
         # Copy the header from the first shadow
-        print(f"SECRET DATA: {len(secret_data)}")
         secret_header = self.shares[0].header
         secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
         secret_image = BMPFile(header=secret_header, image_data=secret_matrix)
