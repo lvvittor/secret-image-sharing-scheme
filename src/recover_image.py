@@ -21,19 +21,12 @@ class RecoverImage:
 
         self.shadow_length = self.secret_length // (self.k - 1)
 
-        print("TOTAL")
-        print(self.block_size * self.blocks_amount)
-        
-        print("K")
-        print(self.k)
-        print("BLOCK SIZE")
-        print(self.block_size)
-        print("SHARE LENGTH")
-        print(share_length)
-        print("SECRET LENGTH")
-        print(self.secret_length)
-        print("BLOCKS AMOUNT")
-        print(self.blocks_amount)
+        print(f"TOTAL {self.shares_amount} SHARES")
+        print(f"K: {self.k}")
+        print(f"BLOCK SIZE: {self.block_size}")
+        print(f"SECRET LENGTH: {self.secret_length}")
+        print(f"BLOCKS AMOUNT: {self.blocks_amount}")
+        print(f"SHADOW LENGTH: {self.shadow_length}")
 
     # Input k shadows, without loss of generality (S1, S2, ..., Sk)
     def recover(self):
@@ -43,27 +36,34 @@ class RecoverImage:
         shadows = []
         mask = self.lsb_mask(self.k)
 
+        print(f"MASK: {mask}")
+
         # Reconstruct the shadows
         for share in self.shares:
             image_array = [byte for row in share.image_data for byte in row]
-            shadow = []
-            for i in range(0, self.shadow_length):
-                shadow_byte = int.from_bytes(image_array[i], byteorder='little')
-                shadow.append(Z251(shadow_byte & mask))
-            shadows.append(shadow)
+            shadow = 0
+            for i in range(0, self.shadow_length * 4):
+                share_byte = int.from_bytes(image_array[i], byteorder='little')
+                shadow_bits = share_byte & mask
+                shadow = shadow << 2
+                shadow = shadow | shadow_bits
+            shadow_bytearray = shadow.to_bytes((shadow.bit_length() + 7) // 8, 'big')
+            print(f"BYTEARRAY LENGTH: {len(shadow_bytearray)}")
+            shadows.append(shadow_bytearray)
             ids.append(Z251(share.header['reserved1']))
 
         # Extract vi,j = (mi,j, di,j), i = 1, 2, ..., t, j = 1, 2, ..., k from S1, S2, ..., Sk
         # For each group of vi,1, vi,2, ..., vi,k, i = 1,2,...,t, reconstruct fi(x) and gi(x)
         # from mi,1, mi,2, ..., mi,k and di,1, di,2, ..., di,k using Lagrange interpolation+
 
-        for block in range(0, self.shadow_length, 2):
+        for block in range(0, self.blocks_amount, 2): # BLOCKS AMOUNT 11250 
             fi_points = []
             gi_points = []
 
-            for i in range(0, self.k):
-                mik: Tuple[Z251, Z251] = (ids[i], shadows[i][block])
-                dik: Tuple[Z251, Z251] = (ids[i], shadows[i][block + 1])
+            for i in range(0, self.k): # BYTEARRAY 5625
+                # print(f"BLOCK: {block} - SHARE: {i}")
+                mik: Tuple[Z251, Z251] = (ids[i], Z251(shadows[i][block]))
+                dik: Tuple[Z251, Z251] = (ids[i], Z251(shadows[i][block + 1]))
                 fi_points.append(mik)
                 gi_points.append(dik)
 
@@ -91,6 +91,7 @@ class RecoverImage:
             secret_data.extend(bi)
         
         # Copy the header from the first shadow
+        print(f"SECRET DATA: {len(secret_data)}")
         secret_header = self.shares[0].header
         secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
         secret_image = BMPFile(header=secret_header, image_data=secret_matrix)
