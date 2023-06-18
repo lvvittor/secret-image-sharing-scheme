@@ -84,39 +84,29 @@ class DistributeImage:
 
     # TODO: check if bits modification is being done correctly
     def lsb_hide(self, shadows, images):
-        mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used 
+        mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used
 
         for i, shadow in enumerate(shadows):
-            #print(f"i: {i}")
-            #print(f"type(images): {type(images)}")
+            # Get the i-th BMPFile from images
             image = images[i]
-            #print(f"image.image_data[2:3]: {image.image_data[2:3]}")
-            #print(f"len(image.image_data[2:3]): {len(image.image_data[2:3][0])}")
-            #print(f"len(bytearray(image)): {len(bytearray(image.image_data))}")
-            #print(f"image.header['reserved1'] = {image.header['reserved1']}")
-            image.header['reserved1'] = i
-            #print(f"new image.header['reserved1'] = {image.header['reserved1']}")
-            shadow_bytes = shadow
 
-            image_bytes = [byte for row in image.image_data for byte in row]
+            # Set header value to the number of shadow we are going to mix in this participants
+            image.header['reserved1'] = i.to_bytes(1, byteorder='little')
 
-            # TODO: check if this actually works
-            byte_number = 54
-            byte_position = byte_number % len(image_bytes)
-            initial_offset = byte_position if byte_position >= 54 else 0
+            image_bytes = flatten_array(image.image_data)
 
-            for j, byte in enumerate(shadow_bytes):
-                # Modificar los bits LSB4 del byte correspondiente en la imagen
-                image_byte = int.from_bytes(image_bytes[j + initial_offset], byteorder='little', signed=False)
-                #print(f"image_bytes[j + initial_offset]: {image_byte}")
-                #print(f"type(image_bytes[j + initial_offset]): {type(image_byte)}")
-                #print(f"mask[0]: {mask[0]}")
-                #print(f"byte: {byte.value}")
-                #print(f"type(byte): {type(byte.value)}")
-                #print(f"mask[1]: {mask[1]}")
-                image_bytes[j + initial_offset] = (image_byte & mask[0]) | (byte.value & mask[1])
-            # Actualizar la imagen modificada
-            #images[i] = bytes(image_bytes)
+            # TODO: check if this actually works -> fixed in bmp.file with line file.seek(self.header['data_offset'])
+            # byte_number = 54
+            # byte_position = byte_number % len(image_bytes)
+            # initial_offset = image.header["data_offset"] # previously, this variable was set to: byte_position if byte_position >= 54 else 0
+
+            for j, byte in enumerate(shadow):
+                # Modify the LSB4 bits of the corresponding byte in the image.
+                image_byte = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
+
+                image_bytes[j] = ((image_byte & mask[0]) | (byte.value & mask[1])).to_bytes(1, byteorder='little')
+
+            # Update image to modified image
             images[i].image_data = image_bytes
 
     def lsb_mask(self, k):
