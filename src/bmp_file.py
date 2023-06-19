@@ -1,5 +1,7 @@
 import os
 import random
+import struct
+from PIL import Image
 
 class BMPFile:
     HEADER_BYTES = 54
@@ -13,7 +15,7 @@ class BMPFile:
             self.image_data = []
             self.read_header()
             self.read_image_data()
-        elif header and image_data:
+        elif header is not None and image_data is not None:
             self.header = header
             self.image_data = image_data
         else:
@@ -28,6 +30,10 @@ class BMPFile:
         return self.total_pixels * self.header['bits_per_pixel']
     
     @property
+    def bytes_per_pixel(self):
+        return self.header['bits_per_pixel'] // BMPFile.BITS_PER_BYTE
+    
+    @property
     def total_bytes(self):
         return self.total_bits // BMPFile.BITS_PER_BYTE
     
@@ -35,7 +41,16 @@ class BMPFile:
     def is_square(self):
         return self.header['width'] == self.header['height']
     
-    
+    @property
+    def row_padding(self):
+        """
+        Calculate the padding for each row to ensure it is a multiple of ROW_ALIGNMENT bytes
+        
+        Returns:
+            int -- Number of bytes to pad each row ((4 - (300 * 1) % 4) % 4 = 0)
+        """
+        return (BMPFile.ROW_ALIGNMENT - (self.header['width'] * self.bytes_per_pixel) % BMPFile.ROW_ALIGNMENT) % BMPFile.ROW_ALIGNMENT
+
     def is_dibisible_by(self, n: int):
         """Returns True if the total number of pixels is divisible by n, False otherwise
         
@@ -45,15 +60,6 @@ class BMPFile:
             
         """
         return self.total_pixels % n == 0
-
-    # TODO: this function will create a
-    def create_image(self, noisy_image):
-        """
-        Arguments:
-        noisy_image {int} -- Number of participant image
-
-        """
-        pass
 
     def read_header(self):
         with open(self.file_path, 'rb') as file:
@@ -78,16 +84,10 @@ class BMPFile:
             self.header['total_colors'] = int.from_bytes(header_data[46:50], 'little')
             self.header['important_colors'] = int.from_bytes(header_data[50:54], 'little')
 
-
     def read_image_data(self):
         with open(self.file_path, 'rb') as file:
-            # Skip the first 54 bytes corresponding to the header
-            file.seek(BMPFile.HEADER_BYTES)
-
-            # Calculate the padding for each row to ensure it is a multiple of ROW_ALIGNMENT bytes
-            bits_per_pixel = self.header['bits_per_pixel']
-            bytes_per_pixel = bits_per_pixel // BMPFile.BITS_PER_BYTE
-            row_padding = (BMPFile.ROW_ALIGNMENT - (self.header['width'] * bytes_per_pixel) % BMPFile.ROW_ALIGNMENT) % BMPFile.ROW_ALIGNMENT
+            # Skip the first bytes corresponding to the header
+            file.seek(self.header['data_offset'])
 
             # Iterate over each row of pixels
             for _ in range(self.header['height']):
@@ -96,17 +96,17 @@ class BMPFile:
                 # Iterate over each pixel in the row
                 for _ in range(self.header['width']):
                     # Read the pixel data corresponding to the bits per pixel size
-                    pixel_data = file.read(bytes_per_pixel)
+                    pixel_data = file.read(self.bytes_per_pixel)
                     row_data.append(pixel_data)
 
                 # Skip the row padding, if present
-                file.seek(row_padding, 1)
+                file.seek(self.row_padding, 1)
 
                 # Add the row pixel data to the image data list
                 self.image_data.append(row_data)
 
     def print_header_info(self):
-        print("Header Info:")
+        print("[Header Info]")
         print("Signature:", self.header['signature'])
         print("File Size:", self.header['file_size'])
         print("Reserved 1:", self.header['reserved1'])
@@ -220,3 +220,72 @@ class BMPFile:
                     secret_bin = secret_bin[8:]
 
         return bytes(secret_data)
+
+    def save(self, file_path):
+        """Save the image data as a BMP file
+        
+        Arguments:
+            file_path {str} -- File path to save the BMP file
+        """
+        print(f"Writing image data to image file using PIL")
+        print(f"self.header['width']: {self.header['width']}")
+        print(f"self.header['height']: {self.header['height']}")
+        img = Image.new('L', (self.header['width'], self.header['height']), "black")
+        pixels = img.load()
+        for column in range(img.size[0]):
+            for row in range(img.size[1]):
+                pixels[row,column] = tuple(self.image_data[img.size[0] - 1 - column][row])
+        img.save(file_path)
+        # print("Saving BMP file")
+        # self.print_header_info()
+        # with open(file_path, 'wb') as file:
+        #     # Write the header data
+        #     file.write(self.get_header_data())
+
+        #     # Skip the first bytes corresponding to the header
+        #     file.seek(self.header['data_offset'])
+
+        #     # Write the image data
+        #     print(f"Pixel data: {self.image_data[0][0]}")
+        #     print(f"len(Pixel data): {len(self.image_data[0][0])}")
+        #     print(f"type(pixel_data): {type(self.image_data[0][0])}")
+
+        #     for column in range(self.header['width']):
+        #         for row in range(self.header['height']):
+        #             file.write(self.image_data[self.header['width'] - 1 - column][row])
+
+        #         # Write row padding, if necessary
+        #         row_padding = bytes([0] * self.row_padding)
+        #         file.write(row_padding)
+
+    def get_header_data(self):
+        """Get the header data as bytes
+        
+        Returns:
+            bytes -- Header data
+        """
+        header_data = [
+            self.header['signature'].encode('utf-8'),
+            struct.pack('<I', self.header['file_size']),
+            struct.pack('<H', self.header['reserved1']),
+            struct.pack('<H', self.header['reserved2']),
+            struct.pack('<I', self.header['data_offset']),
+            struct.pack('<I', self.header['header_size']),
+            struct.pack('<I', self.header['width']),
+            struct.pack('<I', self.header['height']),
+            struct.pack('<H', self.header['planes']),
+            struct.pack('<H', self.header['bits_per_pixel']),
+            struct.pack('<I', self.header['compression']),
+            struct.pack('<I', self.header['image_size']),
+            struct.pack('<I', self.header['x_pixels_per_meter']),
+            struct.pack('<I', self.header['y_pixels_per_meter']),
+            struct.pack('<I', self.header['total_colors']),
+            struct.pack('<I', self.header['important_colors']),
+        ]
+
+        # print it
+        print("HEADER DATA")
+        for i in header_data:
+            print(i)
+
+        return b''.join(header_data)

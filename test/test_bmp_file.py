@@ -7,7 +7,7 @@ class BMPFileTestCase(unittest.TestCase):
     folder_path = Path("images/shares")
 
     def setUp(self):
-        """Get the list of BMP files in the test/images folder"""
+        """Get the list of BMP files"""
         self.bmp_files = [file for file in os.listdir(BMPFileTestCase.folder_path) if file.endswith(".bmp")]
 
     def test_header_info(self):
@@ -46,8 +46,7 @@ class BMPFileTestCase(unittest.TestCase):
             # Check that the image data is a list of lists of bytes
             self.assertIsInstance(image_data, list) # Check that the image data is a list of rows
             self.assertIsInstance(image_data[0], list) # Check that the first row is a list of pixels
-            self.assertIsInstance(image_data[0][0], bytes) # Check that the first pixel is a byte
-           
+            self.assertIsInstance(image_data[0][0], bytes) # Check that the first pixel is a byte        
 
     def test_total_pixels(self):
         for file_name in self.bmp_files:
@@ -56,8 +55,7 @@ class BMPFileTestCase(unittest.TestCase):
             total_pixels = bmp.total_pixels
 
             # Check that the total number of pixels is equal to width x height
-            self.assertEqual(total_pixels, 300 * 300)
-           
+            self.assertEqual(total_pixels, 300 * 300)    
 
     def test_total_bits(self):
         for file_name in self.bmp_files:
@@ -81,10 +79,10 @@ class BMPFileTestCase(unittest.TestCase):
             self.assertTrue(bmp.is_dibisible_by(2 * 7 - 2))
             # self.assertTrue(bmp.is_dibisible_by(2 * 8 - 2)) # TODO: This fails for some reason, need to check why
 
-    def test_create_noisy_image(self):
-        file = BMPFile(noisy_image=1)
-        print(file)
-
+    def test_save(self):
+        file_path = Path("images/covers") / "Alfredshare.bmp"
+        file = BMPFile(file_path)
+        file.save("images/out/test.bmp")
 
 if __name__ == '__main__':
     unittest.main()
