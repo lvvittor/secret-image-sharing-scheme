@@ -1,5 +1,6 @@
 import os
 import random
+import struct
 
 class BMPFile:
     HEADER_BYTES = 54
@@ -13,7 +14,7 @@ class BMPFile:
             self.image_data = []
             self.read_header()
             self.read_image_data()
-        elif header and image_data:
+        elif header is not None and image_data is not None:
             self.header = header
             self.image_data = image_data
         else:
@@ -220,3 +221,54 @@ class BMPFile:
                     secret_bin = secret_bin[8:]
 
         return bytes(secret_data)
+    
+    def save(self, file_path):
+        """Save the image data as a BMP file
+        
+        Arguments:
+            file_path {str} -- File path to save the BMP file
+        """
+        with open(file_path, 'wb') as file:
+            # Write the header data
+            file.write(self.get_header_data())
+
+            # Write the image data
+            for row in self.image_data:
+                for pixel_data in row:
+                    file.write(pixel_data)
+
+                # Write row padding, if necessary
+                row_padding = bytes([0] * ((BMPFile.ROW_ALIGNMENT - (self.header['width'] * self.header['bits_per_pixel'] // BMPFile.BITS_PER_BYTE) % BMPFile.ROW_ALIGNMENT) % BMPFile.ROW_ALIGNMENT))
+                file.write(row_padding)
+
+    def get_header_data(self):
+        """Get the header data as bytes
+        
+        Returns:
+            bytes -- Header data
+        """
+        header_data = [
+            self.header['signature'].encode('utf-8'),
+            struct.pack('<I', self.header['file_size']),
+            struct.pack('<H', self.header['reserved1']),
+            struct.pack('<H', self.header['reserved2']),
+            struct.pack('<I', self.header['data_offset']),
+            struct.pack('<I', self.header['header_size']),
+            struct.pack('<I', self.header['width']),
+            struct.pack('<I', self.header['height']),
+            struct.pack('<H', self.header['planes']),
+            struct.pack('<H', self.header['bits_per_pixel']),
+            struct.pack('<I', self.header['compression']),
+            struct.pack('<I', self.header['image_size']),
+            struct.pack('<I', self.header['x_pixels_per_meter']),
+            struct.pack('<I', self.header['y_pixels_per_meter']),
+            struct.pack('<I', self.header['total_colors']),
+            struct.pack('<I', self.header['important_colors']),
+        ]
+
+        # print it
+        print("HEADER DATA")
+        for i in header_data:
+            print(i)
+
+        return b''.join(header_data)
