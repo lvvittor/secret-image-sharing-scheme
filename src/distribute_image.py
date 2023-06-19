@@ -3,7 +3,7 @@ import random
 from src.polynomial import Polynomial
 from src.bmp_file import BMPFile
 from src.z251 import Z251
-from src.utils import flatten_array
+from src.utils import flatten_array, convert_to_matrix
 
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
@@ -88,28 +88,47 @@ class DistributeImage:
 
         for i, shadow in enumerate(shadows):
             # Get the i-th BMPFile from images
-            image = images[i]
+            print(f"Opening file: {images[i].file_path}")
+            with open(images[i].file_path, 'wb') as file:
+                print(f"Object file: {file}")
+                image = images[i]
+                image.header['reserved1'] = i + 1
+                file.write(image.get_header_data())
+                file.seek(image.header['data_offset'])
+                # Set header value to the number of shadow we are going to mix in this participants
 
-            # Set header value to the number of shadow we are going to mix in this participants
-            image.header['reserved1'] = i.to_bytes(1, byteorder='little')
+                image_bytes = flatten_array(image.image_data)
 
-            image_bytes = flatten_array(image.image_data)
+                # TODO: check if this actually works -> fixed in bmp.file with line file.seek(self.header['data_offset'])
+                # byte_number = 54
+                # byte_position = byte_number % len(image_bytes)
+                # initial_offset = image.header["data_offset"] # previously, this variable was set to: byte_position if byte_position >= 54 else 0
 
-            # TODO: check if this actually works -> fixed in bmp.file with line file.seek(self.header['data_offset'])
-            # byte_number = 54
-            # byte_position = byte_number % len(image_bytes)
-            # initial_offset = image.header["data_offset"] # previously, this variable was set to: byte_position if byte_position >= 54 else 0
+                """ print(f"shadow type: {type(shadow)}")
+                for j, byte in enumerate(shadow):
+                    print(f"byte type: {type(byte)}")
+                    # Modify the LSB4 bits of the corresponding byte in the image.
+                    image_byte = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
+                    # image_bytes[j] = ((image_byte >> mask[0]) | (byte.value & mask[1])).to_bytes(1, byteorder='little') """
+                
+                #iterate over the image bytes
+                shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
+                for _, byte in enumerate(shadow):
+                    shadow_bits = []
+                    for shifting in range(0, 8, 2):
+                        # divide shadow byte into groups of mask bits
+                        shadow_bits.append((byte.value >> shifting) & mask)          
 
-            for j, byte in enumerate(shadow):
-                # Modify the LSB4 bits of the corresponding byte in the image.
-                image_byte = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
+                # for each byte in the image, replace the LSBs with the shadow bits
+                for j, byte in enumerate(image_bytes):
+                    image_byte = int.from_bytes(byte, byteorder='little', signed=False)
+                    image_bytes[j] = ((image_byte >> mask << mask) | (shadow_bits[j])).to_bytes(1, byteorder='little')
 
-                image_bytes[j] = ((image_byte & mask[0]) | (byte.value & mask[1])).to_bytes(1, byteorder='little')
-
-            # Update image to modified image
-            images[i].image_data = image_bytes
+                # Update image to modified image
+                images[i].image_data = convert_to_matrix(image_bytes)
+                file.write(image_bytes)
 
     def lsb_mask(self, k):
-        # If k is 3 or 4, the dealer hides the secret image in LSB4
-        return (0xFC, 0x03) if k not in [3, 4] else (0xF0, 0x0F)
+        # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
+        return 0b1111 if k < 5 else 0b11
 
