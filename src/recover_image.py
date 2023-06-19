@@ -2,7 +2,6 @@ import random
 from src.bmp_file import BMPFile
 from src.polynomial import Polynomial
 from src.z251 import Z251
-import numpy as np
 from typing import List, Tuple
 
 class RecoverImage:
@@ -96,8 +95,13 @@ class RecoverImage:
         
         # Copy the header from the first shadow
         secret_header = self.shares[0].header
-        secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
-        secret_image = BMPFile(header=secret_header, image_data=secret_matrix)
+        height = secret_header['height']
+        width = secret_header['width']
+
+        reshaped_data = [[secret_data[row*width + col] for col in range(width)] for row in range(height)]
+        print(f"final dimensions: {width}x{height} == {len(reshaped_data)}x{len(reshaped_data[0])}")
+        # secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
+        secret_image = BMPFile(header=secret_header, image_data=reshaped_data)
         
         return secret_image
     

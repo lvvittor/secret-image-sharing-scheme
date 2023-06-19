@@ -221,7 +221,7 @@ class BMPFile:
                     secret_bin = secret_bin[8:]
 
         return bytes(secret_data)
-    
+
     def save(self, file_path):
         """Save the image data as a BMP file
         
@@ -231,12 +231,19 @@ class BMPFile:
         with open(file_path, 'wb') as file:
             # Write the header data
             file.write(self.get_header_data())
+            print(f"Header: {self.get_header_data()}")
+            print(f"Header length: {len(self.get_header_data())}")
+            #file.seek(300)
 
             # Write the image data
+            print(f"Pixel data: {self.image_data[0][0]}")
+            print(f"len(Pixel data): {len(self.image_data[0][0])}")
+            print(f"type(pixel_data): {type(self.image_data[0][0])}")
             for row in self.image_data:
                 for pixel_data in row:
                     file.write(pixel_data)
 
+                # TODO: what is this for? Is it completely necesary?
                 # Write row padding, if necessary
                 row_padding = bytes([0] * ((BMPFile.ROW_ALIGNMENT - (self.header['width'] * self.header['bits_per_pixel'] // BMPFile.BITS_PER_BYTE) % BMPFile.ROW_ALIGNMENT) % BMPFile.ROW_ALIGNMENT))
                 file.write(row_padding)
