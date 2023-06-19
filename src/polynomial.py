@@ -4,12 +4,10 @@ from typing import List, Tuple
 
 
 class Polynomial:
-    def __init__(self, coefficients: List[Z251]=None, points: List[Tuple[Z251, Z251]]=None):
+    def __init__(self, coefficients: List[Z251]=None):
         if coefficients:
             self.coefficients = coefficients
             self.degree = len(self.coefficients) - 1
-        elif points:
-            self.interpolate(points)
         else:
             raise ValueError("Invalid arguments")
 
@@ -28,7 +26,8 @@ class Polynomial:
         return result
     
     # TODO: Check if this is correct!
-    def interpolate(self, points: List[Tuple[Z251, Z251]]) -> "Polynomial":
+    @staticmethod
+    def interpolate(points: List[Tuple[Z251, Z251]]) -> "Polynomial":
         """
         Returns the polynomial that interpolates the given points
         
@@ -40,13 +39,33 @@ class Polynomial:
         """
         n = len(points)
         coefficients = []
-        for current_point_index in range(n):
-            current_coefficient = Z251(0)
-            for i in range(n):
-                if i != current_point_index:
-                    li = Z251(1) / (points[current_point_index][0] - points[i][0])
-                    current_coefficient += points[i][1] * li
-            coefficients.append(current_coefficient)
+
+        ca = 0 # coefficients analysed
+        yp_cache: List[Z251] = [0 for _ in range(n)] # y' cache
+        while ca < n:
+            curr_coefficient = Z251(0)
+            top = n - ca # Reduced Lagrange -> We ignore one extra point each iteration
+            for i in range(top):
+                # Calculate y' for the current point
+                y = Z251(0)
+                if ca == 0:
+                    y = points[i][1]
+                else: 
+                    y = (yp_cache[i] - coefficients[ca - 1]) * Z251.INVERSE_TABLE[points[i][0].value] 
+                
+                yp_cache[i] = y
+
+                # Calculate Li(0)
+                li = Z251(1)
+                for j in range(top):
+                    if i != j:
+                        li *= Z251(-1) * points[j][0] / (points[i][0] - points[j][0])
+
+                curr_coefficient += y * li
+  
+            ca += 1
+            coefficients.append(curr_coefficient)
+
         return Polynomial(coefficients)
     
     def set_coefficient(self, index: int, value: Z251):
