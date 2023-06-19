@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "secret-image-sharing-scheme"
+version = "0.1.0"
+description = ""
+authors = ["Lucas Vittor <lvvittor@gmail.com>"]
+readme = "README.md"
+packages = [{include = "secret_image_sharing_scheme"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Pillow = "^9.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

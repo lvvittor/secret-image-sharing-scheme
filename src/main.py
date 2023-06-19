@@ -64,7 +64,6 @@ def recover_image(
     bmp_images = [BMPFile(image) for image in images]
     recover_image = RecoverImage(shares=bmp_images, k=k, share_length=bmp_images[0].total_pixels)
     recovered_image = recover_image.recover()
-    bmp_images[0].save("test.bmp")
     recovered_image.save("recovered.bmp")
 
 

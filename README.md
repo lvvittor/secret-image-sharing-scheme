@@ -10,6 +10,7 @@ Example:
 
 ```bash
 python3 -m src.main d images/secret.bmp 4 images/covers/
+python3 -m src.main r images/secret.bmp 5 images/shares/ 
 ```
 
 ## Running tests
