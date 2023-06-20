@@ -4,6 +4,7 @@ from src.polynomial import Polynomial
 from src.bmp_file import BMPFile
 from src.z251 import Z251
 from src.utils import flatten_array, convert_to_matrix
+from typing import List
 
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
@@ -83,7 +84,7 @@ class DistributeImage:
         return shadows
 
     # TODO: check if bits modification is being done correctly
-    def lsb_hide(self, shadows, images):
+    def lsb_hide(self, shadows, images: List[BMPFile]):
         mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used
 
         for i, shadow in enumerate(shadows):
@@ -114,19 +115,24 @@ class DistributeImage:
                 #iterate over the image bytes
                 shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
                 for _, byte in enumerate(shadow):
-                    shadow_bits = []
                     for shifting in range(0, 8, 2):
                         # divide shadow byte into groups of mask bits
                         shadow_bits.append((byte.value >> shifting) & mask)          
 
                 # for each byte in the image, replace the LSBs with the shadow bits
+                clear_lsb_mask = 0b11111100
                 for j, byte in enumerate(image_bytes):
                     image_byte = int.from_bytes(byte, byteorder='little', signed=False)
-                    image_bytes[j] = ((image_byte >> mask << mask) | (shadow_bits[j])).to_bytes(1, byteorder='little')
+                    # image_bytes[j] = ((image_byte >> mask << mask) | (shadow_bits[j])).to_bytes(1, byteorder='little')
+                    image_byte &= clear_lsb_mask # clear the 2 LSBs
+                    image_byte |= shadow_bits[j] # set the 2 LSBs
+                    image_bytes[j] = image_byte.to_bytes(1, byteorder='little')
+
 
                 # Update image to modified image
                 images[i].image_data = convert_to_matrix(image_bytes)
-                file.write(image_bytes)
+                for byte in image_bytes:
+                    file.write(byte)
 
     def lsb_mask(self, k):
         # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
