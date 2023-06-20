@@ -34,6 +34,7 @@ class RecoverImage:
 
         shadows = []
         mask = self.lsb_mask(self.k)
+        mask_bits = bin(mask)[2:].count('1')
 
         print(f"MASK: {mask}")
 
@@ -41,10 +42,10 @@ class RecoverImage:
         for share in self.shares:
             image_array = [byte for row in share.image_data for byte in row]
             shadow = 0
-            for i in range(0, self.shadow_length * 4):
+            for i in range(0, self.shadow_length * (BMPFile.BITS_PER_BYTE//mask_bits)):
                 share_byte = int.from_bytes(image_array[i], byteorder='little')
                 shadow_bits = share_byte & mask
-                shadow = shadow << 2
+                shadow = shadow << mask_bits
                 shadow = shadow | shadow_bits
             shadow_bytearray = shadow.to_bytes((shadow.bit_length() + 7) // 8, 'big')
             print(f"BYTEARRAY LENGTH: {len(shadow_bytearray)}")
