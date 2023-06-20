@@ -98,6 +98,7 @@ class DistributeImage:
             #iterate over the image bytes
             shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
             for _, byte in enumerate(shadow):
+                # TODO: change this step to match the lsb mask
                 for shifting in range(0, 8, 2):
                     # divide shadow byte into groups of mask bits
                     shadow_bits.append((byte.value >> shifting) & mask)
