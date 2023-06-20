@@ -49,6 +49,8 @@ class RecoverImage:
             shadow_bytearray = shadow.to_bytes((shadow.bit_length() + 7) // 8, 'big')
             print(f"BYTEARRAY LENGTH: {len(shadow_bytearray)}")
             shadows.append(shadow_bytearray)
+            # print share's header
+            share.print_header_info()
             ids.append(Z251(share.header['reserved1']))
 
         # Extract vi,j = (mi,j, di,j), i = 1, 2, ..., t, j = 1, 2, ..., k from S1, S2, ..., Sk

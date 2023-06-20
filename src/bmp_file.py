@@ -235,7 +235,15 @@ class BMPFile:
         for column in range(img.size[0]):
             for row in range(img.size[1]):
                 pixels[row,column] = tuple(self.image_data[img.size[0] - 1 - column][row])
-        img.save(file_path)
+        # print(f"\nFrom bmp file....")
+        # self.print_header_info()
+        # print(f".... \n")
+        # print(f"bmpinfo: {img.info}")
+        # img.info["bmpinfo"] = self.header
+        #img.info["bmpinfo"] = self.header
+        img.info["bmpinfo"] = self.header
+        img.save(file_path, format='BMP')
+
         # print("Saving BMP file")
         # self.print_header_info()
         # with open(file_path, 'wb') as file:
