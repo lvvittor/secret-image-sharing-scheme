@@ -40,12 +40,13 @@ class DistributeImage:
             v_ij.update({i+1: []})
 
         image_array = [byte for row in self.secret_image.image_data for byte in row]
+        print(f"IMAGE ARRAY LENGTH: {len(image_array)}")
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
         # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
         for i in range(0, self.secret_image.total_pixels, self.block_size):
             # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
-            fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k - 1)])
+            fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k)])
 
             # The dealer chooses a random integer r_i and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
             # r_i*a_{i,0} + b_{i,0} = 0 (mod 251) and r_i*a_{i,1} + b_{i,1} = 0 (mod 251)
@@ -57,13 +58,17 @@ class DistributeImage:
             a0 = image_array[i] if image_array[i] != 0 else 1
             a1 = image_array[i + 1] if image_array[i + 1] != 0 else 1
 
-            b0 = Z251(ri * a0 * -1) if Z251(ri * a0 * -1) != 0 else 1
-            b1 = Z251(ri * a1 * -1) if Z251(ri * a1 * -1) != 0 else 1
+            b0 = Z251(ri * a0 * -1)
+            b1 = Z251(ri * a1 * -1)
 
-            gi = Polynomial(coefficients=[Z251(image_array[i + self.k - 1 + j]) for j in range(self.k - 1)])
+            gi_coefficients = [b0, b1]
+            for j in range(2, self.k):
+                gi_coefficients.append(Z251(image_array[i + self.k + j - 2]))
 
-            gi.set_coefficient(0, b0)
-            gi.set_coefficient(1, b1)
+            gi = Polynomial(coefficients=gi_coefficients)
+
+            # gi.set_coefficient(0, b0)
+            # gi.set_coefficient(1, b1)
 
             dict_idx = i // self.block_size + 1
             v_ij[dict_idx].append(fi)

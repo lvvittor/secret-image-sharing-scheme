@@ -145,9 +145,16 @@ class BMPFile:
         for column in range(img.size[1]):
             for row in range(img.size[0]):
                 pixels[row,column] = tuple(self.image_data[img.size[1] - 1 - column][row])
+        
         img.save(file_path)
+        with open(file_path, 'r+b') as file:
+            file_data = file.read()
+            file_data = file_data[:6] + struct.pack('<H', self.header['reserved1']) + file_data[8:]
+            file.seek(0)
+            file.write(file_data)
 
-        img.save(file_path, format='BMP')
+        with open(file_path, 'r+b') as file:
+            print(f"FILE DATA SIZE {len(file.read())}")
 
     def get_header_data(self):
         """Get the header data as bytes
