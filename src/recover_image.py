@@ -100,7 +100,7 @@ class RecoverImage:
         width = secret_header['width']
 
         reshaped_data = [[secret_data[row*width + col] for col in range(width)] for row in range(height)]
-        print(f"final dimensions: {width}x{height} == {len(reshaped_data)}x{len(reshaped_data[0])}")
+        print(f"final dimensions: {width}x{height} == {len(reshaped_data[0])}x{len(reshaped_data)}")
         # secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
         secret_image = BMPFile(header=secret_header, image_data=reshaped_data)
         
