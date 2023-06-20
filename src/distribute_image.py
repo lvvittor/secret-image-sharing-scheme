@@ -83,7 +83,6 @@ class DistributeImage:
         self.lsb_hide(shadows, self.participants)
         return shadows
 
-    # TODO: check if bits modification is being done correctly
     def lsb_hide(self, shadows, images: List[BMPFile]):
         mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used
 
@@ -93,22 +92,8 @@ class DistributeImage:
             image = images[i]
             image.header['reserved1'] = i + 1
             print(f"Image header: {image.header['reserved1']}]")
-            # file.seek(image.header['data_offset'])
-            # Set header value to the number of shadow we are going to mix in this participants
 
             image_bytes = flatten_array(image.image_data)
-
-            # TODO: check if this actually works -> fixed in bmp.file with line file.seek(self.header['data_offset'])
-            # byte_number = 54
-            # byte_position = byte_number % len(image_bytes)
-            # initial_offset = image.header["data_offset"] # previously, this variable was set to: byte_position if byte_position >= 54 else 0
-
-            """ print(f"shadow type: {type(shadow)}")
-            for j, byte in enumerate(shadow):
-                print(f"byte type: {type(byte)}")
-                # Modify the LSB4 bits of the corresponding byte in the image.
-                image_byte = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
-                # image_bytes[j] = ((image_byte >> mask[0]) | (byte.value & mask[1])).to_bytes(1, byteorder='little') """
 
             #iterate over the image bytes
             shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
@@ -129,7 +114,7 @@ class DistributeImage:
 
             # Update image to modified image
             image.image_data = convert_to_matrix(image_bytes)
-            image.save_new(image.file_path)
+            image.save(image.file_path)
 
     def lsb_mask(self, k):
         # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
