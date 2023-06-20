@@ -234,7 +234,7 @@ class BMPFile:
         pixels = img.load()
         for column in range(img.size[1]):
             for row in range(img.size[0]):
-                pixels[row,column] = tuple(self.image_data[img.size[0] - 1 - column][row])
+                pixels[row,column] = tuple(self.image_data[img.size[1] - 1 - column][row])
         img.save(file_path)
         # print("Saving BMP file")
         # self.print_header_info()
