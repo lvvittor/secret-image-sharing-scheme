@@ -142,11 +142,11 @@ class BMPFile:
         print(f"self.header['height']: {self.header['height']}")
         img = Image.new('L', (self.header['width'], self.header['height']), "black")
         pixels = img.load()
-        for column in range(img.size[0]):
-            for row in range(img.size[1]):
-                pixels[row,column] = tuple(self.image_data[img.size[0] - 1 - column][row])
+        for column in range(img.size[1]):
+            for row in range(img.size[0]):
+                pixels[row,column] = tuple(self.image_data[img.size[1] - 1 - column][row])
+        img.save(file_path)
 
-        img.info["bmpinfo"] = self.header
         img.save(file_path, format='BMP')
 
     def get_header_data(self):
