@@ -39,7 +39,6 @@ class Polynomial:
         """
         n = len(points)
         coefficients = []
-
         ca = 0 # coefficients analysed
         yp_cache: List[Z251] = [0 for _ in range(n)] # y' cache
         while ca < n:

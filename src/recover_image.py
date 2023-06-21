@@ -20,23 +20,14 @@ class RecoverImage:
 
         self.shadow_length = self.secret_length // (self.k - 1)
 
-        print(f"TOTAL {self.shares_amount} SHARES")
-        print(f"K: {self.k}")
-        print(f"BLOCK SIZE: {self.block_size}")
-        print(f"SECRET LENGTH: {self.secret_length}")
-        print(f"BLOCKS AMOUNT: {self.blocks_amount}")
-        print(f"SHADOW LENGTH: {self.shadow_length}")
-
     # Input k shadows, without loss of generality (S1, S2, ..., Sk)
     def recover(self):
         secret_data = []
         ids = []
 
         shadows = []
-        mask = self.lsb_mask(self.k)
+        mask = self.lsb_mask()
         mask_bits = bin(mask)[2:].count('1')
-
-        print(f"MASK: {mask}")
 
         # Reconstruct the shadows
         for share in self.shares:
@@ -48,7 +39,6 @@ class RecoverImage:
                 shadow = shadow << mask_bits
                 shadow = shadow | shadow_bits
             shadow_bytearray = shadow.to_bytes((shadow.bit_length() + 7) // 8, 'big')
-            print(f"BYTEARRAY LENGTH: {len(shadow_bytearray)}")
             shadows.append(shadow_bytearray)
             ids.append(Z251(share.header['reserved1']))
 
@@ -87,9 +77,9 @@ class RecoverImage:
             # each coefficient needs to be transformed to a byte
             bi = []
             for i in range(0, self.k):
-                bi.append(fi.coefficients[i].value.to_bytes(1, 'big'))
+                bi.append(fi.coefficients[i].value.to_bytes(1, 'little'))
             for i in range(2, self.k):
-                bi.append(gi.coefficients[i].value.to_bytes(1, 'big'))
+                bi.append(gi.coefficients[i].value.to_bytes(1, 'little'))
 
             # Append the recovered block to the secret image
             secret_data.extend(bi)
@@ -100,8 +90,6 @@ class RecoverImage:
         width = secret_header['width']
 
         reshaped_data = [[secret_data[row*width + col] for col in range(width)] for row in range(height)]
-        print(f"final dimensions: {width}x{height} == {len(reshaped_data[0])}x{len(reshaped_data)}")
-        # secret_matrix = np.reshape(secret_data, (secret_header['height'], secret_header['width']))
         secret_image = BMPFile(header=secret_header, image_data=reshaped_data)
         
         return secret_image
@@ -112,6 +100,6 @@ class RecoverImage:
                 return False
         return True
     
-    def lsb_mask(self, k):
+    def lsb_mask(self):
         # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
-        return 0b1111 if k < 5 else 0b11
+        return 0b1111 if self.k < 5 else 0b11

@@ -1,7 +1,10 @@
+from __future__ import annotations
 import random
 from src.polynomial import Polynomial
 from src.bmp_file import BMPFile
 from src.z251 import Z251
+from src.utils import flatten_array, convert_to_matrix
+from typing import List
 
 class DistributeImage:
     ALLOWED_K_VALUES = [3, 4, 5, 6, 7, 8]
@@ -30,7 +33,7 @@ class DistributeImage:
     def generate_shadows(self):
         shadows = []
         v_ij = {}
-        
+
         # v_ij should be a dictionary with the following structure:
         # v_ij = {1: [f_1(j), g_1(j)], 2: [f_2(j), g_2(j)], ..., t: [f_t(j), g_t(j)]}
         for i in range(self.total_blocks):
@@ -42,7 +45,10 @@ class DistributeImage:
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
         for i in range(0, self.secret_image.total_pixels, self.block_size):
             # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
-            fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k - 1)])
+
+
+            fi_coefficients = [Z251(image_array[i + j]) for j in range(self.k)]
+            fi = Polynomial(coefficients=fi_coefficients[::-1])
 
             # The dealer chooses a random integer r_i and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
             # r_i*a_{i,0} + b_{i,0} = 0 (mod 251) and r_i*a_{i,1} + b_{i,1} = 0 (mod 251)
@@ -57,10 +63,11 @@ class DistributeImage:
             b0 = Z251(ri * a0 * -1)
             b1 = Z251(ri * a1 * -1)
 
-            gi = Polynomial(coefficients=[Z251(image_array[i + self.k - 1 + j]) for j in range(self.k - 1)])
+            gi_coefficients = [b0, b1]
+            for j in range(2, self.k):
+                gi_coefficients.append(Z251(image_array[i + self.k + j - 2]))
 
-            gi.set_coefficient(0, b0)
-            gi.set_coefficient(1, b1)
+            gi = Polynomial(coefficients=gi_coefficients[::-1])
 
             dict_idx = i // self.block_size + 1
             v_ij[dict_idx].append(fi)
@@ -77,26 +84,42 @@ class DistributeImage:
                 pratial_shadows.append(m_ij)
                 pratial_shadows.append(d_ij)
             shadows.append(pratial_shadows)
+        self.lsb_hide(shadows, self.participants)
         return shadows
 
-    # TODO: check if bits modification is being done correctly
-    def lsb_hide(self, shadows, images):
-        mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used 
+    def lsb_hide(self, shadows: List[List[Z251]], images: List[BMPFile]):
+        mask = self.lsb_mask() # determine whether LSB2 or LSB4 should be used
+        lsb = self.lsb() # determine how many LSBs should be used
 
         for i, shadow in enumerate(shadows):
+            # get the i-th BMPFile from images
             image = images[i]
+            image.header['reserved1'] = i + 1
 
-            shadow_bytes = bytearray(shadow)
-            image_bytes = bytearray(image)
+            image_bytes = flatten_array(image.image_data)
 
-            for j, byte in enumerate(shadow_bytes):
-                # Modify the LSB4 bits of the corresponding byte in the image
-                image_bytes[j] = (image_bytes[j] & mask[0]) | (byte & mask[1])  
-            # Update the modified image
-            images[i] = bytes(image_bytes)
+            shadow_bits = []
+            for _, byte in enumerate(shadow):
+                for shifting in range(BMPFile.BITS_PER_BYTE - lsb, -2, -lsb):
+                    # divide shadow byte into groups of mask bits
+                    shadow_bits.append((byte.value >> shifting) & mask)
 
-    def lsb_mask(self, k):
-        # If k is 3 or 4, the dealer hides the secret image in LSB4
-        return (0xFC, 0x03) if k not in [3, 4] else (0xF0, 0x0F)
+            # for each byte in the image, replace the LSBs with the shadow bits
+            clear_lsb_mask = 0b11111111 ^ mask
 
+            pixels_used = 2 * self.total_blocks * (BMPFile.BITS_PER_BYTE // lsb)
+            for j in range(pixels_used):
+                image_byte: int = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
+                image_byte &= clear_lsb_mask # clear the LSBs
+                image_byte |= shadow_bits[j] # set the LSBs
+                image_bytes[j] = image_byte.to_bytes(1, byteorder='little')
 
+            # Update image to modified image
+            image.image_data = convert_to_matrix(image_bytes, image.header['width'], image.header['height'])
+            image.save(image.file_path)
+
+    def lsb_mask(self):
+        return 0b1111 if self.k < 5 else 0b11
+
+    def lsb(self):
+        return 4 if self.k < 5 else 2

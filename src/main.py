@@ -30,14 +30,22 @@ def distribute_image(
         print(f"Error: At least {k} images are required in the directory")
         return
 
+    #images_data = []
+    #modified_images = []
+    #for image in images:
+    #    modified_images.append(image.copy())
+    #    images_data.append(modified_images[-1].load())
+
     # Perform distribution of the secret image
     print(
-        f"Distributing the secret image '{secret_image}' into {len(images)} images with path: {images}"
+        f"Distributing the secret image '{secret_image}' into {len(images)} images with path: {images}..."
     )
 
     # Add your logic here to distribute the secret image into the images in the directory
     distribute_image = DistributeImage(secret_image, k, participants=[BMPFile(image) for image in images])
     distribute_image.generate_shadows()
+
+    print(f"Image successfully distributed!")
 
 
 def recover_image(
