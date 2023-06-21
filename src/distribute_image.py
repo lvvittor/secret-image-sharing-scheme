@@ -46,7 +46,10 @@ class DistributeImage:
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
         for i in range(0, self.secret_image.total_pixels, self.block_size):
             # The dealer generates a k-1 degree polynomial fi(x) = a_{i,0} + a_{i,1}x + ... + a_{i,k-1}x^k-1 in Z251[x]
-            fi = Polynomial(coefficients=[Z251(image_array[i + j]) for j in range(self.k)])
+
+
+            fi_coefficients = [Z251(image_array[i + j]) for j in range(self.k)]
+            fi = Polynomial(coefficients=fi_coefficients[::-1])
 
             # The dealer chooses a random integer r_i and computes two pixels b_{i,0} and b_{i,1} which satisfy that:
             # r_i*a_{i,0} + b_{i,0} = 0 (mod 251) and r_i*a_{i,1} + b_{i,1} = 0 (mod 251)
@@ -65,10 +68,7 @@ class DistributeImage:
             for j in range(2, self.k):
                 gi_coefficients.append(Z251(image_array[i + self.k + j - 2]))
 
-            gi = Polynomial(coefficients=gi_coefficients)
-
-            # gi.set_coefficient(0, b0)
-            # gi.set_coefficient(1, b1)
+            gi = Polynomial(coefficients=gi_coefficients[::-1])
 
             dict_idx = i // self.block_size + 1
             v_ij[dict_idx].append(fi)
@@ -88,7 +88,7 @@ class DistributeImage:
         self.lsb_hide(shadows, self.participants)
         return shadows
 
-    def lsb_hide(self, shadows, images: List[BMPFile]):
+    def lsb_hide(self, shadows: List[List[Z251]], images: List[BMPFile]):
         mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used
 
         for i, shadow in enumerate(shadows):
@@ -104,7 +104,7 @@ class DistributeImage:
             shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
             for _, byte in enumerate(shadow):
                 # TODO: change this step to match the lsb mask
-                for shifting in range(0, 8, 2):
+                for shifting in range(6, -2, -2):
                     # divide shadow byte into groups of mask bits
                     shadow_bits.append((byte.value >> shifting) & mask)
 
@@ -117,7 +117,6 @@ class DistributeImage:
                 image_byte |= shadow_bits[j] # set the 2 LSBs
                 image_bytes[j] = image_byte.to_bytes(1, byteorder='little')
 
-
             # Update image to modified image
             image.image_data = convert_to_matrix(image_bytes)
             image.save(image.file_path)
@@ -125,4 +124,3 @@ class DistributeImage:
     def lsb_mask(self, k):
         # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
         return 0b1111 if k < 5 else 0b11
-
