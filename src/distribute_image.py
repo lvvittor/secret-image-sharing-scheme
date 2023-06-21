@@ -89,38 +89,38 @@ class DistributeImage:
         return shadows
 
     def lsb_hide(self, shadows: List[List[Z251]], images: List[BMPFile]):
-        mask = self.lsb_mask(self.k) # determine whether LSB2 or LSB4 should be used
+        mask = self.lsb_mask() # determine whether LSB2 or LSB4 should be used
+        lsb = self.lsb() # determine how many LSBs should be used
 
         for i, shadow in enumerate(shadows):
-            # Get the i-th BMPFile from images
-            print(f"Opening file: {images[i].file_path}")
+            # get the i-th BMPFile from images
             image = images[i]
             image.header['reserved1'] = i + 1
-            print(f"Image header: {image.header['reserved1']}]")
 
             image_bytes = flatten_array(image.image_data)
 
-            #iterate over the image bytes
-            shadow_bits = [] # 0b11101010 -> [0b1110, 0b1010]
+            shadow_bits = []
             for _, byte in enumerate(shadow):
-                # TODO: change this step to match the lsb mask
-                for shifting in range(6, -2, -2):
+                for shifting in range(6, -2, -lsb):
                     # divide shadow byte into groups of mask bits
                     shadow_bits.append((byte.value >> shifting) & mask)
 
             # for each byte in the image, replace the LSBs with the shadow bits
-            clear_lsb_mask = 0b11111100
-            for j, byte in enumerate(image_bytes):
-                image_byte = int.from_bytes(byte, byteorder='little', signed=False)
-                # image_bytes[j] = ((image_byte >> mask << mask) | (shadow_bits[j])).to_bytes(1, byteorder='little')
-                image_byte &= clear_lsb_mask # clear the 2 LSBs
-                image_byte |= shadow_bits[j] # set the 2 LSBs
+            clear_lsb_mask = 0b11111111 ^ mask
+
+            pixels_used = 2 * self.total_blocks * (BMPFile.BITS_PER_BYTE // lsb)
+            for j in range(pixels_used):
+                image_byte: int = int.from_bytes(image_bytes[j], byteorder='little', signed=False)
+                image_byte &= clear_lsb_mask # clear the LSBs
+                image_byte |= shadow_bits[j] # set the LSBs
                 image_bytes[j] = image_byte.to_bytes(1, byteorder='little')
 
             # Update image to modified image
             image.image_data = convert_to_matrix(image_bytes)
             image.save(image.file_path)
 
-    def lsb_mask(self, k):
-        # If k is 3 or 4, get the 4 least significant bits, otherwise get the 2 least significant bits
-        return 0b1111 if k < 5 else 0b11
+    def lsb_mask(self):
+        return 0b1111 if self.k < 5 else 0b11
+
+    def lsb(self):
+        return 4 if self.k < 5 else 2
