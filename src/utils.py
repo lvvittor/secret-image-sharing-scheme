@@ -8,13 +8,13 @@ def flatten_array(arr):
             flattened.append(sub_array)
     return flattened
 
-def convert_to_matrix(array):
-    if len(array) != 300 * 300:
-        raise ValueError("Array size must be 300 * 300")
-
+def convert_to_matrix(array, width, height):
     matrix = []
-    for i in range(0, len(array), 300):
-        row = array[i:i+300]
+
+    for i in range(height):
+        row = []
+        for j in range(width):
+            row.append(array[i * width + j])
         matrix.append(row)
 
     return matrix

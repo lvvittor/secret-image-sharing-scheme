@@ -137,9 +137,6 @@ class BMPFile:
         Arguments:
             file_path {str} -- File path to save the BMP file
         """
-        print(f"Writing image data to image file using PIL")
-        print(f"self.header['width']: {self.header['width']}")
-        print(f"self.header['height']: {self.header['height']}")
         img = Image.new('L', (self.header['width'], self.header['height']), "black")
         pixels = img.load()
         for column in range(img.size[1]):
@@ -152,9 +149,6 @@ class BMPFile:
             file_data = file_data[:6] + struct.pack('<H', self.header['reserved1']) + file_data[8:]
             file.seek(0)
             file.write(file_data)
-
-        with open(file_path, 'r+b') as file:
-            print(f"FILE DATA SIZE {len(file.read())}")
 
     def get_header_data(self):
         """Get the header data as bytes
@@ -180,11 +174,6 @@ class BMPFile:
             struct.pack('<I', self.header['total_colors']),
             struct.pack('<I', self.header['important_colors']),
         ]
-
-        # print it
-        print("HEADER DATA")
-        for i in header_data:
-            print(i)
 
         return b''.join(header_data)
 

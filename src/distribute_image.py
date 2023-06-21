@@ -40,7 +40,6 @@ class DistributeImage:
             v_ij.update({i+1: []})
 
         image_array = [byte for row in self.secret_image.image_data for byte in row]
-        print(f"IMAGE ARRAY LENGTH: {len(image_array)}")
         # The dealer divides the image intro t-non-overlapping 2k - 2 pixel blocks
         # For each block Bi (i in [1, t]) there are 2k - 2 secret pixels
         # a_{i,0}, a_{i,1}, ..., a_{i,k-1} and b_{i,0}, b_{i,1}, ..., b_{i,k-1} in Z251
@@ -101,7 +100,7 @@ class DistributeImage:
 
             shadow_bits = []
             for _, byte in enumerate(shadow):
-                for shifting in range(6, -2, -lsb):
+                for shifting in range(BMPFile.BITS_PER_BYTE - lsb, -2, -lsb):
                     # divide shadow byte into groups of mask bits
                     shadow_bits.append((byte.value >> shifting) & mask)
 
@@ -116,7 +115,7 @@ class DistributeImage:
                 image_bytes[j] = image_byte.to_bytes(1, byteorder='little')
 
             # Update image to modified image
-            image.image_data = convert_to_matrix(image_bytes)
+            image.image_data = convert_to_matrix(image_bytes, image.header['width'], image.header['height'])
             image.save(image.file_path)
 
     def lsb_mask(self):

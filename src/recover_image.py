@@ -20,13 +20,6 @@ class RecoverImage:
 
         self.shadow_length = self.secret_length // (self.k - 1)
 
-        print(f"TOTAL {self.shares_amount} SHARES")
-        print(f"K: {self.k}")
-        print(f"BLOCK SIZE: {self.block_size}")
-        print(f"SECRET LENGTH: {self.secret_length}")
-        print(f"BLOCKS AMOUNT: {self.blocks_amount}")
-        print(f"SHADOW LENGTH: {self.shadow_length}")
-
     # Input k shadows, without loss of generality (S1, S2, ..., Sk)
     def recover(self):
         secret_data = []
