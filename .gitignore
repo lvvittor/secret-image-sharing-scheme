@@ -49,3 +49,6 @@ config.local.py
 
 # Ignore development database
 db.sqlite3
+
+# Image files
+images/*
