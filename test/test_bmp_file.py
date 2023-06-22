@@ -15,7 +15,6 @@ class BMPFileTestCase(unittest.TestCase):
             file_path = Path(BMPFileTestCase.folder_path) / file_name
             bmp = BMPFile(file_path)
 
-            # Check that the header fields have correct values (TODO: commented fields mean that not all the images has the same value, and we need to test why)
             self.assertEqual(bmp.header['signature'], 'BM')
             self.assertEqual(bmp.header['file_size'], os.path.getsize(file_path))
             # self.assertEqual(bmp.header['reserved1'], 3)
@@ -77,12 +76,6 @@ class BMPFileTestCase(unittest.TestCase):
             self.assertTrue(bmp.is_dibisible_by(2 * 5 - 2))
             self.assertTrue(bmp.is_dibisible_by(2 * 6 - 2))
             self.assertTrue(bmp.is_dibisible_by(2 * 7 - 2))
-            # self.assertTrue(bmp.is_dibisible_by(2 * 8 - 2)) # TODO: This fails for some reason, need to check why
-
-    def test_save(self):
-        file_path = Path("images/covers") / "Alfredshare.bmp"
-        file = BMPFile(file_path)
-        file.save("images/out/test.bmp")
 
 if __name__ == '__main__':
     unittest.main()

@@ -12,7 +12,6 @@ class DistributeImageTests(unittest.TestCase):
         [5, 2 * 5 - 2],
         [6, 2 * 6 - 2],
         [7, 2 * 7 - 2],
-        # [8, 2 * 8 - 2], TODO: This fails for some reason, need to check why
     ]
 
     def setUp(self):

@@ -25,7 +25,6 @@ class Polynomial:
             result += coefficient * (x ** (self.degree - index))
         return result
     
-    # TODO: Check if this is correct!
     @staticmethod
     def interpolate(points: List[Tuple[Z251, Z251]]) -> "Polynomial":
         """
