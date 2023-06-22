@@ -1,7 +1,6 @@
 import os
 import random
 import struct
-from PIL import Image
 
 class BMPFile:
     HEADER_BYTES = 54
@@ -12,10 +11,14 @@ class BMPFile:
         if file_path and not header and not image_data:
             self.file_path = file_path
             self.header = {}
+            self.header_size = {}
             self.image_data = []
+            self.set_header_size()
             self.read_header()
             self.read_image_data()
         elif header is not None and image_data is not None:
+            self.header_size = {}
+            self.set_header_size()
             self.header = header
             self.image_data = image_data
         else:
@@ -84,6 +87,24 @@ class BMPFile:
             self.header['total_colors'] = int.from_bytes(header_data[46:50], 'little')
             self.header['important_colors'] = int.from_bytes(header_data[50:54], 'little')
 
+    def set_header_size(self):
+        self.header_size['signature'] = 2
+        self.header_size['file_size'] = 4
+        self.header_size['reserved1'] = 2
+        self.header_size['reserved2'] = 2
+        self.header_size['data_offset'] = 4
+        self.header_size['header_size'] = 4
+        self.header_size['width'] = 4
+        self.header_size['height'] = 4
+        self.header_size['planes'] = 2
+        self.header_size['bits_per_pixel'] = 2
+        self.header_size['compression'] = 4
+        self.header_size['image_size'] = 4
+        self.header_size['x_pixels_per_meter'] = 4
+        self.header_size['y_pixels_per_meter'] = 4
+        self.header_size['total_colors'] = 4
+        self.header_size['important_colors'] = 4
+
     def read_image_data(self):
         with open(self.file_path, 'rb') as file:
             # Skip the first bytes corresponding to the header
@@ -137,18 +158,33 @@ class BMPFile:
         Arguments:
             file_path {str} -- File path to save the BMP file
         """
-        img = Image.new('L', (self.header['width'], self.header['height']), "black")
-        pixels = img.load()
-        for column in range(img.size[1]):
-            for row in range(img.size[0]):
-                pixels[row,column] = tuple(self.image_data[img.size[1] - 1 - column][row])
-        
-        img.save(file_path)
-        with open(file_path, 'r+b') as file:
-            file_data = file.read()
-            file_data = file_data[:6] + struct.pack('<H', self.header['reserved1']) + file_data[8:]
+        flatten_array = []
+        for row in self.image_data:
+            for pixel in row:
+                flatten_array.append(pixel)
+
+        with open(file_path, 'w+b') as file:
             file.seek(0)
-            file.write(file_data)
+            for key, value in self.header.items():
+                if key == 'signature':
+                    file.write(value.encode('utf-8'))
+                else:
+                    file.write(value.to_bytes(self.header_size[key], 'little'))
+
+            # this is in order to copy what other bmp files
+            # had between the header and the data
+            zero = 0
+            count = 0
+            for _ in range(BMPFile.HEADER_BYTES, self.header['data_offset']):
+                file.write(zero.to_bytes(1, 'little'))
+                count += 1
+                if count == 4:
+                    count = 0
+                    zero += 1
+
+            for column in range(self.header['height']):
+                for row in range(self.header['width']):
+                    file.write(flatten_array[column * self.header['width'] + row])
 
     def get_header_data(self):
         """Get the header data as bytes
@@ -176,23 +212,3 @@ class BMPFile:
         ]
 
         return b''.join(header_data)
-
-    def read_reserved_bit(self):
-        bmp = open(self.file_path, 'rb')
-        bmp.read(2)
-        bmp.read(4)
-        return int.from_bytes(bmp.read(2), byteorder='little')
-
-    def change_reserved_bit(self, newValue):
-        # Access the raw file data
-        with open(self.file_path, 'rb') as file:
-            file_data = file.read()
-
-        # Update the reserved bytes with a new value
-        new_reserved_value = newValue
-        new_reserved_bytes = struct.pack('<H', new_reserved_value)
-        updated_file_data = file_data[:6] + new_reserved_bytes + file_data[8:]
-
-        # Save the updated file data back to the bitmap file
-        with open(self.file_path, 'wb') as file:
-            file.write(updated_file_data)
