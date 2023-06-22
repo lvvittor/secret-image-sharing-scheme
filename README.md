@@ -9,7 +9,6 @@ A Python implementation of the paper *Liu, Y.-X., Sun, Q.-D., & Yang, C.-N. (201
 ├── src/
 │   ├── __init__.py
 │   ├── bmp_file.py
-│   ├── constants.py
 │   ├── distribute_image.py
 │   ├── main.py
 │   ├── polynomial.py

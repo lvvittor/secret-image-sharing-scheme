@@ -1,4 +1,4 @@
-import unittest, os
+import unittest
 from pathlib import Path
 from src.distribute_image import DistributeImage
 from src.bmp_file import BMPFile
